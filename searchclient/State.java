@@ -236,7 +236,7 @@ public class State
                 boxCol = destinationCol + action.boxColDelta;
                 if (box!= 0 && boxRow<walls.length && boxRow>=0 && boxCol>=0 && boxCol<walls[0].length)
                 {
-                    return this.cellIsFree(boxRow, boxCol) && boxColors[agent].toString() == agentColor.toString();
+                    return this.cellIsFree(boxRow, boxCol) && boxColors[agent] == agentColor;
                 }
                 return false;
 
@@ -248,7 +248,7 @@ public class State
                 box = this.boxes[boxRow-action.boxRowDelta][boxCol-action.boxColDelta];
                 if (box!= 0 && destinationRow<walls.length && destinationRow>=0 && destinationCol>=0 && destinationCol<walls[0].length)
                 {
-                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[agent].toString() == agentColor.toString();
+                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[agent] == agentColor;
                 }
                 return false;
         }
