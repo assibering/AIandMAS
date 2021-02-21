@@ -236,7 +236,7 @@ public class State
                 boxCol = destinationCol + action.boxColDelta;
                 if (box!= 0 && boxRow<walls.length && boxRow>=0 && boxCol>=0 && boxCol<walls[0].length)
                 {
-                    return this.cellIsFree(boxRow, boxCol) && boxColors[agent] == agentColor;
+                    return this.cellIsFree(boxRow, boxCol) && boxColors[box - 65] == agentColor;
                 }
                 return false;
 
@@ -248,7 +248,7 @@ public class State
                 box = this.boxes[boxRow-action.boxRowDelta][boxCol-action.boxColDelta];
                 if (box!= 0 && destinationRow<walls.length && destinationRow>=0 && destinationCol>=0 && destinationCol<walls[0].length)
                 {
-                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[agent] == agentColor;
+                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[box - 65] == agentColor;
                 }
                 return false;
         }
@@ -297,8 +297,8 @@ public class State
                 case Pull:
                     destinationRows[agent] = agentRow + action.agentRowDelta;
                     destinationCols[agent] = agentCol + action.agentColDelta;
-                    boxRows[agent] = agentRow + action.boxRowDelta;
-                    boxCols[agent] = agentCol + action.boxColDelta;
+                    boxRows[agent] = agentRow;
+                    boxCols[agent] = agentCol;
                     break;
            }
         }
