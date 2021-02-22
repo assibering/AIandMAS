@@ -18,15 +18,58 @@ public abstract class Heuristic
     }
 
     public int h(State s) {
+        //NEW for multi-agent
+        long[] agentDistancesForColours = new long[State.boxColors.length];
+        long[] remainingGoalsPerColour = new long[State.boxColors.length];
+        long[] remainingAgentGoalsPerColour = new long[State.boxColors.length];
+        long[] manhattanDistancesPerColour = new long[State.boxColors.length];
+        long[] wallsInManhattanDistancesPerColour = new long[State.boxColors.length];
+        Arrays.fill(agentDistancesForColours, Long.MAX_VALUE);
+
         List<Coordinates> remainingGoals = goalSet.stream()
                 .filter(entry -> s.boxes[entry.x][entry.y] != entry.character)
                 .collect(Collectors.toList());
-        long remainingGoalsSize = remainingGoals.size();
 
+        List<Coordinates> remainingAgentGoals = goalSet.stream()
+                .filter(entry -> entry.character < 'A' && (entry.x != s.agentRows[entry.character - '0'] || entry.y != s.agentCols[entry.character - '0']))
+                .collect(Collectors.toList());
+
+        for (int i = 0; i < remainingGoalsPerColour.length; i++) {
+            int finalI = i;
+            remainingGoalsPerColour[i] = remainingGoals.stream().filter(coord -> coord.character - 'A' == finalI).count();
+            remainingAgentGoalsPerColour[i] = remainingAgentGoals.stream().filter(coord -> coord.character - '0' == finalI).count();
+        }
+        long remainingGoalsSize = remainingGoals.size();
         long manhattanDistances = 0;
         long wallsInManhattanDistances = 0;
         long minimumAgentDistance = Long.MAX_VALUE;
-        if (remainingGoals.size() != 0) {
+        if (remainingGoals.size() != 0 || remainingAgentGoals.size() != 0) {
+            for (Coordinates goalCoords : remainingAgentGoals) {
+                int agentX = s.agentRows[goalCoords.character - '0'];
+                int agentY = s.agentCols[goalCoords.character - '0'];
+                manhattanDistances += Math.abs(goalCoords.x - agentX) + Math.abs(goalCoords.y - agentY);
+                manhattanDistancesPerColour[goalCoords.character - '0'] += Math.abs(goalCoords.x - agentX) + Math.abs(goalCoords.y - agentY);
+                long wallsInManhattanDistances1 = 0, wallsInManhattanDistances2 = 0;
+                for (int wallX = Math.min(goalCoords.x, agentX); wallX < Math.max(goalCoords.x, agentX); wallX++) {
+                    if (State.walls[wallX][goalCoords.y]) {
+                        wallsInManhattanDistances1++;
+                    }
+                    if (State.walls[wallX][agentY]) {
+                        wallsInManhattanDistances2++;
+                    }
+                }
+                for (int wallY = Math.min(goalCoords.y, agentY); wallY < Math.max(goalCoords.y, agentY); wallY++) {
+                    if (State.walls[goalCoords.x][wallY]) {
+                        wallsInManhattanDistances1++;
+                    }
+                    if (State.walls[agentX][wallY]) {
+                        wallsInManhattanDistances2++;
+                    }
+                }
+                wallsInManhattanDistances += 4 * Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
+                wallsInManhattanDistancesPerColour[goalCoords.character - '0'] += 4 * Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
+
+            }
             for (int i = 0; i < s.boxes.length; i++) {
                 for (int j = 0; j < s.boxes[0].length && !remainingGoals.isEmpty(); j++) {
                     if (s.boxes[i][j] != 0) {
@@ -41,50 +84,54 @@ public abstract class Heuristic
                         }
                         Coordinates goalCoords = goalOpt.get();
                         manhattanDistances += Math.abs(goalCoords.x - boxX) + Math.abs(goalCoords.y - boxY);
+                        manhattanDistancesPerColour[goalCoords.character - 'A'] += Math.abs(goalCoords.x - boxX) + Math.abs(goalCoords.y - boxY);
                         //Add walls in between
                         long wallsInManhattanDistances1 = 0, wallsInManhattanDistances2 = 0;
-                        for(int wallX = Math.min(goalCoords.x, boxX); wallX < Math.max(goalCoords.x, boxX); wallX++){
-                            if(State.walls[wallX][goalCoords.y]){
+                        for (int wallX = Math.min(goalCoords.x, boxX); wallX < Math.max(goalCoords.x, boxX); wallX++) {
+                            if (State.walls[wallX][goalCoords.y]) {
                                 wallsInManhattanDistances1++;
                             }
-                            if(State.walls[wallX][boxY]){
+                            if (State.walls[wallX][boxY]) {
                                 wallsInManhattanDistances2++;
                             }
                         }
-                        for(int wallY = Math.min(goalCoords.y, boxY); wallY < Math.max(goalCoords.y, boxY); wallY++){
-                            if(State.walls[goalCoords.x][wallY]){
+                        for (int wallY = Math.min(goalCoords.y, boxY); wallY < Math.max(goalCoords.y, boxY); wallY++) {
+                            if (State.walls[goalCoords.x][wallY]) {
                                 wallsInManhattanDistances1++;
                             }
-                            if(State.walls[boxX][wallY]){
+                            if (State.walls[boxX][wallY]) {
                                 wallsInManhattanDistances2++;
                             }
                         }
-                        wallsInManhattanDistances += Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
-
+                        wallsInManhattanDistances += 4 * Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
+                        wallsInManhattanDistancesPerColour[goalCoords.character - 'A'] += 4 * Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
                         //Look for any matching agent per box
-                        for(int agent = 0; agent < s.agentCols.length; agent++) {
-                            if(State.agentColors[agent] == State.boxColors[goalOpt.get().character - 65]){
+                        for (int agent = 0; agent < s.agentCols.length; agent++) {
+                            if (State.agentColors[agent] == State.boxColors[goalOpt.get().character - 'A']) {
                                 long distance = Math.abs(boxX - s.agentRows[agent]) + Math.abs(boxY - s.agentCols[agent]);
                                 //Add walls in between
                                 wallsInManhattanDistances1 = 0;
                                 wallsInManhattanDistances2 = 0;
-                                for(int wallX = Math.min(s.agentRows[agent], boxX); wallX < Math.max(s.agentRows[agent], boxX); wallX++){
-                                    if(State.walls[wallX][s.agentCols[agent]]){
+                                for (int wallX = Math.min(s.agentRows[agent], boxX); wallX < Math.max(s.agentRows[agent], boxX); wallX++) {
+                                    if (State.walls[wallX][s.agentCols[agent]]) {
                                         wallsInManhattanDistances1++;
                                     }
-                                    if(State.walls[wallX][boxY]){
+                                    if (State.walls[wallX][boxY]) {
                                         wallsInManhattanDistances2++;
                                     }
                                 }
-                                for(int wallY = Math.min(s.agentCols[agent], boxY); wallY < Math.max(s.agentCols[agent], boxY); wallY++){
-                                    if(State.walls[s.agentRows[agent]][wallY]){
+                                for (int wallY = Math.min(s.agentCols[agent], boxY); wallY < Math.max(s.agentCols[agent], boxY); wallY++) {
+                                    if (State.walls[s.agentRows[agent]][wallY]) {
                                         wallsInManhattanDistances1++;
                                     }
-                                    if(State.walls[boxX][wallY]){
+                                    if (State.walls[boxX][wallY]) {
                                         wallsInManhattanDistances2++;
                                     }
                                 }
                                 distance += Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
+                                //NEW for multi-agent
+                                if (distance < agentDistancesForColours[goalOpt.get().character - 'A'])
+                                    agentDistancesForColours[goalOpt.get().character - 'A'] = distance;
                                 if (distance < minimumAgentDistance)
                                     minimumAgentDistance = distance;
                                 break;
@@ -96,8 +143,18 @@ public abstract class Heuristic
                 }
             }
         }
-
-        return (int) (2*s.boxes.length*s.boxes[0].length*remainingGoalsSize + minimumAgentDistance + manhattanDistances + 4*wallsInManhattanDistances);
+        //NEW for multi-agent
+        return (int)
+                (s.boxes.length * s.boxes[0].length *
+                        (Arrays.stream(remainingGoalsPerColour).sum()
+                                + Arrays.stream(remainingAgentGoalsPerColour).sum())
+                        + Arrays.stream(agentDistancesForColours)
+                        .filter(dist -> dist != Long.MAX_VALUE)
+                        .min().orElse(0)
+                        + Arrays.stream(manhattanDistancesPerColour)
+                        .sum()
+                        + 4 * Arrays.stream(wallsInManhattanDistancesPerColour)
+                        .sum());
     }
 
     public abstract int f(State s);
