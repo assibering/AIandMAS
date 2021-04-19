@@ -4,10 +4,8 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
+import java.util.stream.Collectors;
 
 public class SearchClient {
     public static State parseLevel(BufferedReader serverMessages)
@@ -98,11 +96,15 @@ public class SearchClient {
         // End
         // line is currently "#end"
 
-        return new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals);
+        return new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals, 0);
     }
 
-    public static List<State> parseLevelSubgoals(BufferedReader serverMessages)
+    public static List<List<State>> parseLevelSubgoals(BufferedReader serverMessages)
             throws IOException {
+        List<List<State>> agentResult = new ArrayList<>();
+        for (int i = 0; i < 11; i++) {
+            agentResult.add(new ArrayList<>());
+        }
         // We can assume that the level file is conforming to specification, since the server verifies this.
         // Read domain
         serverMessages.readLine(); // #domain
@@ -148,7 +150,8 @@ public class SearchClient {
         int[] agentRows = new int[10];
         int[] agentCols = new int[10];
         boolean[][] walls = new boolean[numRows][numCols];
-        char[][] boxes = new char[numRows][numCols];
+        char[][][] boxes = new char[26][numRows][numCols];
+        char[][] globalBoxes = new char[numRows][numCols];
         for (int row = 0; row < numRows; ++row) {
             line = levelLines.get(row);
             for (int col = 0; col < line.length(); ++col) {
@@ -159,7 +162,8 @@ public class SearchClient {
                     agentCols[c - '0'] = col;
                     ++numAgents;
                 } else if ('A' <= c && c <= 'Z') {
-                    boxes[row][col] = c;
+                    boxes[c - 'A'][row][col] = c;
+                    globalBoxes[row][col] = c;
                 } else if (c == '+') {
                     walls[row][col] = true;
                 }
@@ -168,9 +172,9 @@ public class SearchClient {
         agentRows = Arrays.copyOf(agentRows, numAgents);
         agentCols = Arrays.copyOf(agentCols, numAgents);
 
-        ArrayList<State> result = new ArrayList<>();
         // Read goal state
         // line is currently "#goal"
+        char[][] globalGoals = new char[numRows][numCols];
         line = serverMessages.readLine();
         int row = 0;
         while (!line.startsWith("#")) {
@@ -180,9 +184,22 @@ public class SearchClient {
                 if (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z')) {
                     char[][] goals = new char[numRows][numCols];
                     goals[row][col] = c;
-                    result.add(new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals));
+                    globalGoals[row][col] = c;
+                    //result.add(new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals));
+                    if(('A' <= c)) {
+                        Color agentColour = Arrays.stream(agentColors)
+                                .filter(colour -> colour.equals(boxColors[c - 'A']))
+                                .findFirst().get();
+                        int agentIndex = Arrays.asList(agentColors).indexOf(agentColour);
+                        agentResult.get(agentIndex)
+                                .add(new State(agentRows, agentCols, agentColors, walls, boxes[c - 'A'], boxColors, goals, agentIndex));
+                    } else {{
+                        agentResult.get(c - '0')
+                            .add(new State(agentRows, agentCols, agentColors, walls, new char[numRows][numCols], boxColors, goals, c - '0'));
+                    }}
                 }
             }
+            agentResult.get(10).add(new State(agentRows, agentCols, agentColors, walls, globalBoxes, boxColors, globalGoals, 0));
 
             ++row;
             line = serverMessages.readLine();
@@ -191,7 +208,7 @@ public class SearchClient {
         // End
         // line is currently "#end"
 
-        return result;
+        return agentResult;
     }
 
     public static State searchForLastState(State initialState, Frontier frontier) {
@@ -215,101 +232,121 @@ public class SearchClient {
         BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.US_ASCII));
 
         // State initialState = SearchClient.parseLevel(serverMessages);
-        List<State> initialSubgoalsState = SearchClient.parseLevelSubgoals(serverMessages);
+        List<List<State>> initialSubgoalsState = SearchClient.parseLevelSubgoals(serverMessages);
         // Select search strategy.
         Frontier frontier;
         // Search for a plan.
         List<Action[]> plan = new ArrayList<>();
-        System.out.println("#Number of subgoals: " + initialSubgoalsState.size());
+        Heuristic heuristic = new HeuristicAStar(initialSubgoalsState.get(10).get(0));
+        initialSubgoalsState = initialSubgoalsState.subList(0, 10)
+                .stream()
+                .filter(list -> list.size() > 0)
+                .collect(Collectors.toList());
+        initialSubgoalsState.forEach(states -> states.sort(heuristic));
+        initialSubgoalsState.sort((s1, s2) -> heuristic.compare(s1.get(0), s2.get(0)));
+        State lastState = initialSubgoalsState.get(0).get(0);
+        char[][] remainingBoxes = lastState.boxes;
 
-        State lastState = initialSubgoalsState.get(0);
-        int boxLeftX = -1;
-        int boxLeftY = -1;
-        for (State s : initialSubgoalsState) {
-            lastState = new State(lastState.agentRows, lastState.agentCols, State.agentColors,
-                    State.walls, lastState.boxes, State.boxColors, s.goals);
-            if(boxLeftX > -1) {
-                if(lastState.boxes[boxLeftX][boxLeftY] == 0) {
-                    throw new IOException("Goal box not at goal, leaving...");
+        for(List<State> agentStates: initialSubgoalsState) {
+            System.out.println("#Number of subgoals: " + agentStates.size());
+            for (State s : agentStates) {
+                if(remainingBoxes == null) {
+                    remainingBoxes = s.boxes;
                 }
-                lastState.boxes[boxLeftX][boxLeftY] = 0;
-            }
-            int boxesCount = 0;
-            for (int i = 0; i < lastState.boxes.length; i++) {
-                for (int j = 0; j < lastState.boxes[i].length; j++) {
-                    if (lastState.boxes[i][j] != 0) {
-                        boxesCount++;
-                    }
-                }
-            }
-            System.out.println("#Boxes left: " + boxesCount);
-            for (int i = 0; i < lastState.goals.length; i++) {
-                lastState.goals[i] = Arrays.copyOf(s.goals[i], s.goals[i].length);
-            }
-
-            if (args.length > 0) {
-                switch (args[0].toLowerCase(Locale.ROOT)) {
-                    case "-bfs":
-                        frontier = new FrontierBFS();
-                        break;
-                    case "-dfs":
-                        frontier = new FrontierDFS();
-                        break;
-                    case "-astar":
-                        frontier = new FrontierBestFirst(new HeuristicAStar(lastState));
-                        break;
-                    case "-wastar":
-                        int w = 5;
-                        if (args.length > 1) {
-                            try {
-                                w = Integer.parseUnsignedInt(args[1]);
-                            } catch (NumberFormatException e) {
-                                System.err.println("Couldn't parse weight argument to -wastar as integer, using default.");
-                            }
+                lastState = new State(lastState.agentRows, lastState.agentCols, State.agentColors,
+                        State.walls, remainingBoxes, State.boxColors, s.goals, s.currentAgent);
+                int boxesCount = 0;
+                for (int i = 0; i < lastState.boxes.length; i++) {
+                    for (int j = 0; j < lastState.boxes[i].length; j++) {
+                        if (lastState.boxes[i][j] != 0) {
+                            System.out.println("#Existing box: " + lastState.boxes[i][j]);
+                            boxesCount++;
                         }
-                        frontier = new FrontierBestFirst(new HeuristicWeightedAStar(lastState, w));
-                        break;
-                    case "-greedy":
-                        frontier = new FrontierBestFirst(new HeuristicGreedy(lastState));
-                        break;
-                    default:
-                        frontier = new FrontierBFS();
-                        System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
-                                "-greedy to set the search strategy.");
-                }
-            } else {
-                frontier = new FrontierBFS();
-                System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
-                        "set the search strategy.");
-            }
-            try {
-                lastState = SearchClient.searchForLastState(lastState, frontier);
-            } catch (OutOfMemoryError ex) {
-                System.err.println("Maximum memory usage exceeded.");
-                lastState = null;
-            }
-
-            // Print plan to server.
-            if (lastState == null || lastState.extractPlan() == null) {
-                System.err.println("Unable to solve level.");
-                System.exit(0);
-            } else {
-                System.err.format("Found solution of length %,d.\n", lastState.extractPlan().length);
-
-                plan.addAll(Arrays.asList(lastState.extractPlan()));
-            }
-
-            //Preparing for next subgoal
-            //TODO: lead to better resolution of that issue than "oh, it's just a wall"
-            for (int i = 0; i < lastState.goals.length; i++) {
-                for (int j = 0; j < lastState.goals[i].length; j++) {
-                    if (lastState.goals[i][j] != 0) {
-                        State.walls[i][j] = true;
-                        boxLeftX = i;
-                        boxLeftY = j;
                     }
                 }
+                System.out.println("#Boxes left: " + boxesCount);
+                for (int i = 0; i < lastState.goals.length; i++) {
+                    lastState.goals[i] = Arrays.copyOf(s.goals[i], s.goals[i].length);
+                }
+                for (int i = 0; i < lastState.goals.length; i++) {
+                    for (int j = 0; j < lastState.goals[i].length; j++) {
+                        if (lastState.goals[i][j] != 0) {
+                            System.out.println("#Current goal: " + lastState.goals[i][j]);
+                        }
+                    }
+                }
+
+                if (args.length > 0) {
+                    switch (args[0].toLowerCase(Locale.ROOT)) {
+                        case "-bfs":
+                            frontier = new FrontierBFS();
+                            break;
+                        case "-dfs":
+                            frontier = new FrontierDFS();
+                            break;
+                        case "-astar":
+                            frontier = new FrontierBestFirst(new HeuristicAStar(lastState));
+                            break;
+                        case "-wastar":
+                            int w = 5;
+                            if (args.length > 1) {
+                                try {
+                                    w = Integer.parseUnsignedInt(args[1]);
+                                } catch (NumberFormatException e) {
+                                    System.err.println("Couldn't parse weight argument to -wastar as integer, using default.");
+                                }
+                            }
+                            frontier = new FrontierBestFirst(new HeuristicWeightedAStar(lastState, w));
+                            break;
+                        case "-greedy":
+                            frontier = new FrontierBestFirst(new HeuristicGreedy(lastState));
+                            break;
+                        default:
+                            frontier = new FrontierBFS();
+                            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
+                                    "-greedy to set the search strategy.");
+                    }
+                } else {
+                    frontier = new FrontierBFS();
+                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
+                            "set the search strategy.");
+                }
+                try {
+                    lastState = SearchClient.searchForLastState(lastState, frontier);
+                } catch (OutOfMemoryError ex) {
+                    System.err.println("Maximum memory usage exceeded.");
+                    lastState = null;
+                }
+
+                // Print plan to server.
+                if (lastState == null || lastState.extractPlan() == null) {
+                    System.err.println("Unable to solve level.");
+                    System.exit(0);
+                } else {
+                    System.err.format("Found solution of length %,d.\n", lastState.extractPlan().length);
+
+                    plan.addAll(Arrays.asList(lastState.extractPlan()));
+                }
+
+                //Preparing for next subgoal
+                //TODO: lead to better resolution of that issue than "oh, it's just a wall"
+                for (int i = 0; i < lastState.goals.length; i++) {
+                    for (int j = 0; j < lastState.goals[i].length; j++) {
+                        if (lastState.goals[i][j] != 0) {
+                            State.walls[i][j] = true;
+                            lastState.boxes[i][j] = 0;
+                        }
+                    }
+                }
+                if(boxesCount > 1) {
+                    remainingBoxes = lastState.boxes;
+                } else {
+                    remainingBoxes = null;
+                }
             }
+        }
+        for (Action[] jointAction : plan) {
+            System.out.println("#Action to be taken: " + Arrays.toString(jointAction));
         }
         for (Action[] jointAction : plan) {
             System.out.print(jointAction[0].name);
