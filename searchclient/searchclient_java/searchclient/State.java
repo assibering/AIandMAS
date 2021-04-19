@@ -30,7 +30,7 @@ public class State
     */
     public static boolean[][] walls;
     public char[][] boxes;
-    public static char[][] goals;
+    public char[][] goals;
 
     /*
         The box colors are indexed alphabetically. So this.boxColors[0] is the color of A boxes, 
@@ -75,6 +75,10 @@ public class State
         for (int i = 0; i < parent.boxes.length; i++)
         {
             this.boxes[i] = Arrays.copyOf(parent.boxes[i], parent.boxes[i].length);
+        }
+        this.goals = new char[parent.goals.length][];
+        for(int i = 0; i < parent.goals.length; i++) {
+            this.goals[i] = Arrays.copyOf(parent.goals[i], parent.goals[i].length);
         }
 
         // Set own parameters

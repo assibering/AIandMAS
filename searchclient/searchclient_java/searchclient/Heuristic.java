@@ -8,10 +8,10 @@ public abstract class Heuristic
     ArrayList<Coordinates> goalSet = new ArrayList<>();
 
     public Heuristic(State initialState) {
-        for (int i = 0; i < State.goals.length; i++) {
-            for (int j = 0; j < State.goals[0].length; j++) {
-                if (State.goals[i][j] != 0) {
-                    goalSet.add(new Coordinates(i, j, State.goals[i][j]));
+        for (int i = 0; i < initialState.goals.length; i++) {
+            for (int j = 0; j < initialState.goals[0].length; j++) {
+                if (initialState.goals[i][j] != 0) {
+                    goalSet.add(new Coordinates(i, j, initialState.goals[i][j]));
                 }
             }
         }
