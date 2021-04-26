@@ -3,6 +3,7 @@ package searchclient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.Random;
 
 public class State
@@ -28,9 +29,12 @@ public class State
         For example, this.walls[2] is an array of booleans for the third row.
         this.walls[row][col] is true if there's a wall at (row, col).
     */
-    public static boolean[][] walls;
+    public boolean[][] walls;
     public char[][] boxes;
-    public static char[][] goals;
+    
+    
+//    public static char[][] goals;
+    public char[][] goals;
 
     /*
         The box colors are indexed alphabetically. So this.boxColors[0] is the color of A boxes, 
@@ -72,6 +76,8 @@ public class State
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
         this.agentCols = Arrays.copyOf(parent.agentCols, parent.agentCols.length);
         this.boxes = new char[parent.boxes.length][];
+        this.goals = parent.goals;
+        this.walls = parent.walls;
         for (int i = 0; i < parent.boxes.length; i++)
         {
             this.boxes[i] = Arrays.copyOf(parent.boxes[i], parent.boxes[i].length);
@@ -120,6 +126,104 @@ public class State
     {
         return this.g;
     }
+    
+    public void setGoalstate(char[][] goal) {
+    	this.goals = goal;
+    }
+    
+    public int[] getSingleAgentRow(int agent) {
+    	int[] single = new int[] {this.agentRows[agent]};
+    	return single;
+    }
+    
+    public int[] getSingleAgentCol(int agent) {
+    	int[] single = new int[] {this.agentCols[agent]};
+    	return single;
+    }
+    
+    public char[][] getSingleAgentBoxes(int agent) {
+    	char[][] boxes = new char[this.boxes.length][this.boxes[0].length];
+    	
+    	for (int row=1; row<this.boxes.length; row++) {
+    		for (int col=1; col<this.boxes[row].length; col++) {
+    			
+    			char box = this.boxes[row][col];
+    			if ('A' <= box && box <= 'Z') {
+    				if (this.agentColors[agent].equals(boxColors[box - 'A'])) {
+    					boxes[row][col] = box;
+    				}
+    			}
+    			
+    		}
+    	}
+    	return boxes;
+    }
+    
+    
+    public LinkedList<char[][]> getAgentSubGoals(int agent) {
+    	
+    	LinkedList<char[][]> subgoalsBox = new LinkedList<char[][]>();
+    	LinkedList<char[][]> subgoalsBoxPrio = new LinkedList<char[][]>();
+    	 
+    	for (int row=1; row<this.goals.length - 1; row ++) {
+        	for (int col=1; col < this.goals[row].length - 1 ; col++) {
+        		
+        		char goal = this.goals[row][col];
+        		
+        		if ('A' <= goal && goal <= 'Z') {
+        			
+        			if (this.agentColors[agent].equals(this.boxColors[goal - 65])) {
+        				char[][] subgoal = new char[this.goals.length][this.goals[0].length];
+            			subgoal[row][col] = goal;
+            			
+            			if (prioritizeSubGoal(row, col)) {
+            				subgoalsBoxPrio.addLast(subgoal);
+            			} else {
+            				subgoalsBox.addLast(subgoal);
+            			}
+        			}
+        			
+                } else if ('0' <= goal && goal <= '9') {
+                	if (agent == Integer.parseInt(String.valueOf(goal))) {
+                		char[][] subgoal = new char[this.goals.length][this.goals[0].length];
+            			subgoal[row][col] = goal;
+            			subgoalsBox.addLast(subgoal);
+                	}
+                }
+        	}
+        }
+    	
+    	for (char [][] priosubgoal : subgoalsBoxPrio) {
+    		subgoalsBox.addFirst(priosubgoal);
+    	}
+    	
+    	return subgoalsBox;
+    }
+    
+    
+    
+    public boolean prioritizeSubGoal(int row, int col) {
+    	
+    	char north = this.goals[row-1][col];
+    	char south = this.goals[row+1][col];
+    	char west = this.goals[row][col-1];
+    	char east = this.goals[row][col+1];
+    	
+    	if (this.walls[row-1][col] || ('A' <= north && north <= 'Z')) {
+    		if (this.walls[row+1][col] || ('A' <= south && south <= 'Z')) {
+    			if (this.walls[row][col-1] || ('A' <= west && west <= 'Z')) {
+    				if (this.walls[row][col+1] || ('A' <= east && east <= 'Z')) {
+    					return true;
+    				}
+    			}
+    		}
+    	}
+    	
+    	return false;
+    	
+    }
+    
+    
 
     public boolean isGoalState()
     {
@@ -140,6 +244,7 @@ public class State
                 }
             }
         }
+        
         return true;
     }
 
@@ -161,18 +266,21 @@ public class State
             }
             applicableActions[agent] = agentActions.toArray(new Action[0]);
         }
+        
+        
+        
 
         // Iterate over joint actions, check conflict and generate child states.
         Action[] jointAction = new Action[numAgents];
         int[] actionsPermutation = new int[numAgents];
-        ArrayList<State> expandedStates = new ArrayList<>(16);
+        ArrayList<State> expandedStates = new ArrayList<>();
         while (true)
         {
             for (int agent = 0; agent < numAgents; ++agent)
             {
                 jointAction[agent] = applicableActions[agent][actionsPermutation[agent]];
             }
-
+            
             if (!this.isConflicting(jointAction))
             {
                 expandedStates.add(new State(this, jointAction));
@@ -205,6 +313,7 @@ public class State
         }
 
         Collections.shuffle(expandedStates, State.RNG);
+        
         return expandedStates;
     }
 
@@ -232,24 +341,32 @@ public class State
                 destinationRow = agentRow + action.agentRowDelta;
                 destinationCol = agentCol + action.agentColDelta;
                 box = this.boxes[destinationRow][destinationCol];
-                boxRow = destinationRow + action.boxRowDelta;
-                boxCol = destinationCol + action.boxColDelta;
-                if (box!= 0 && boxRow<walls.length && boxRow>=0 && boxCol>=0 && boxCol<walls[0].length)
-                {
-                    return this.cellIsFree(boxRow, boxCol) && boxColors[box - 65] == agentColor;
+                
+                if ('A' <= box && box <= 'Z') {
+                	if (agentColor.equals(boxColors[box - 65])) {
+                		boxRow = destinationRow + action.boxRowDelta;
+                        boxCol = destinationCol + action.boxColDelta;
+                        return this.cellIsFree(boxRow, boxCol);
+                	}
+                 
                 }
                 return false;
 
             case Pull:
                 destinationRow = agentRow + action.agentRowDelta;
                 destinationCol = agentCol + action.agentColDelta;
-                boxRow = agentRow;
-                boxCol = agentCol;
-                box = this.boxes[boxRow-action.boxRowDelta][boxCol-action.boxColDelta];
-                if (box!= 0 && destinationRow<walls.length && destinationRow>=0 && destinationCol>=0 && destinationCol<walls[0].length)
-                {
-                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[box - 65] == agentColor;
+                
+                if (this.cellIsFree(destinationRow, destinationCol)) {
+                	boxRow = agentRow;
+                    boxCol = agentCol;
+                	box = this.boxes[boxRow-action.boxRowDelta][boxCol-action.boxColDelta];
+                	if ('A' <= box && box <= 'Z') {
+                		if (agentColor.equals(boxColors[box - 65])) {
+                			return true;
+                		}
+                	}
                 }
+                
                 return false;
         }
 
@@ -301,8 +418,12 @@ public class State
                     boxCols[agent] = agentCol;
                     break;
            }
+            
         }
-
+        //DEFINE OCCUPIED POSITIONS
+        
+        
+        
         for (int a1 = 0; a1 < numAgents; ++a1)
         {
             if (jointAction[a1] == Action.NoOp)
@@ -329,6 +450,11 @@ public class State
                 }
 
                 if (destinationRows[a1] == boxRows[a2]  && destinationCols[a1] == boxCols[a2])
+                {
+                    return true;
+                }
+                
+                if (destinationRows[a2] == boxRows[a1]  && destinationCols[a2] == boxCols[a1])
                 {
                     return true;
                 }

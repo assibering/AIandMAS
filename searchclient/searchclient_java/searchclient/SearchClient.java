@@ -7,6 +7,7 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Locale;
 
 public class SearchClient
@@ -95,6 +96,8 @@ public class SearchClient
         // Read goal state
         // line is currently "#goal"
         char[][] goals = new char[numRows][numCols];
+        LinkedList<char[][]> subgoals = new LinkedList<char[][]>();
+        
         line = serverMessages.readLine();
         int row = 0;
         while (!line.startsWith("#"))
@@ -141,7 +144,7 @@ public class SearchClient
         // Parse the level.
         BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.US_ASCII));
         State initialState = SearchClient.parseLevel(serverMessages);
-
+        
         // Select search strategy.
         Frontier frontier;
         if (args.length > 0)

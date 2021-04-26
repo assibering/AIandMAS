@@ -3,6 +3,7 @@ package searchclient;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.LinkedList;
 
 public class GraphSearch {
 
@@ -35,42 +36,264 @@ public class GraphSearch {
 
 
             int iterations = 0;
+            
+            
+//            System.err.println("GOALSTATE: " + Arrays.deepToString(initialState.goals));
+            
+            System.err.println(frontier.getName().contains("greedy"));
+            boolean greedy = false;
+            boolean wastar = false;
+            boolean astar = false;
+            
+            if (frontier.getName().contains("greedy")) {
+            	greedy = true;
+            }
+            
+            if (frontier.getName().contains("WA*")) {
+            	wastar = true;
+            }
+            
+            if (frontier.getName().contains("A*")) {
+            	astar = true;
+            }
+            
+            LinkedList<char[][]> subgoals = new LinkedList<char[][]>();
+            
+            LinkedList<char[][]>[] MAsubgoals = new LinkedList[initialState.agentRows.length];
+            
+            for (int agent=0; agent<initialState.agentRows.length; agent++) {
+            	subgoals = initialState.getAgentSubGoals(agent);
+            	MAsubgoals[agent] = subgoals;
+            }
+            
+            LinkedList<Action[]> actions = new LinkedList<Action[]>();
+            
+            State s = new State(initialState.agentRows, initialState.agentRows, State.agentColors,
+            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals);
+            
+            
+//            for (char[][] sss : subgoals) {
+//            	System.err.println(Arrays.deepToString(sss));
+//            }
+            
+            
+            
+            for (int agent=0; agent<s.agentRows.length; agent++) {
+            	subgoals = MAsubgoals[agent];
+            	int[] aRows = s.getSingleAgentRow(agent);
+            	int[] aCols = s.getSingleAgentCol(agent);
+            	char[][] aBoxes = s.getSingleAgentBoxes(agent);
+            	
+            	 for (char[][] subgoal : subgoals) {
+                 	s = new State(aRows, aCols, State.agentColors,
+                 		s.walls, aBoxes, State.boxColors, subgoal);
+                 	
+                 	if (greedy) {
+                 		frontier = new FrontierBestFirst(new HeuristicGreedy(s));
+                 	}
+                 	
+                 	else if (astar) {
+                 		frontier = new FrontierBestFirst(new HeuristicAStar(s));
+                 	}
+                 	
+                 	else if (wastar) {
+                 		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 2));
+                 	}
+                 	
+                 	frontier.add(s);
+                     HashSet<State> explored = new HashSet<>();
+                 	
+                     while (true) {
 
-            frontier.add(initialState);
-            HashSet<State> explored = new HashSet<>();
+                         //Print a status message every 10000 iteration
+                         if (++iterations % 10000 == 0) {
+                             printSearchStatus(explored, frontier);
+                         }
 
-            while (true) {
+                         if(frontier.isEmpty()) {
+                             printSearchStatus(explored, frontier);
+                             return null;
+                         }
 
-                //Print a status message every 10000 iteration
-                if (++iterations % 10000 == 0) {
-                    printSearchStatus(explored, frontier);
-                }
+                         s = frontier.pop();
+                         if(s.isGoalState()){
+                             System.err.println("SUBGOAL FOUND");
+                             
+                             for (int row=1; row<s.goals.length-1; row++) {
+                             	for (int col=1; col<s.goals[row].length-1; col++) {
+                             		
+                             		char goal = s.goals[row][col];
+                             		if ('A' <= goal && goal <= 'Z') {
+                             			s.boxes[row][col] = 0;
+                             			s.walls[row][col] = true;
+                             		}
+                             	}
+                             }
+                             
+                             Action[][] subactions =  s.extractPlan();
+                             for (Action[] subaction : subactions) {
+                             	actions.addLast(subaction);
+//                             	System.err.println(Arrays.toString(subaction));
+                             }
+                             
+//                             while(!frontier.isEmpty()) {
+//                             	frontier.pop();
+//                             }
+                             aRows = s.getSingleAgentRow(agent);
+                         	 aCols = s.getSingleAgentCol(agent);
+                         	 aBoxes = s.getSingleAgentBoxes(agent);
+                             
+                             break;
+                         }
+                         
+                         
+                         
+                         explored.add(s);
 
-                if(frontier.isEmpty()) {
-                    printSearchStatus(explored, frontier);
-                    return null;
-                }
-
-                State s = frontier.pop();
-                if(s.isGoalState()){
-                    printSearchStatus(explored, frontier);
-                    return s.extractPlan();
-                }
-
-                explored.add(s);
 
 
+                         ArrayList<State> States = s.getExpandedStates();
+                         for(int i = 0; i < States.size(); ++i){
+                             State expanded = States.get(i);
+                             if(!explored.contains(expanded) && !frontier.contains(expanded)) {
+                                 frontier.add(expanded);
+                             }
+                         }
+                     }
+                 }
+                 
+                 Action[][] total_plan = actions.toArray(new Action[0][0]);
+                 
+                 return total_plan;
+            	
+            	
+            	
+            	
+            }
+            
+            for (char[][] subgoal : subgoals) {
+            	s = new State(s.agentRows, s.agentCols, State.agentColors,
+            		s.walls, s.boxes, State.boxColors, subgoal);
+            	
+            	if (greedy) {
+            		frontier = new FrontierBestFirst(new HeuristicGreedy(s));
+            	}
+            	
+            	else if (astar) {
+            		frontier = new FrontierBestFirst(new HeuristicAStar(s));
+            	}
+            	
+            	else if (wastar) {
+            		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 2));
+            	}
+            	
+            	frontier.add(s);
+                HashSet<State> explored = new HashSet<>();
+            	
+                while (true) {
 
-                ArrayList<State> States = s.getExpandedStates();
-                for(int i = 0; i < States.size(); ++i){
-                    State expanded = States.get(i);
-                    if(!explored.contains(expanded) && !frontier.contains(expanded)) {
-                        frontier.add(expanded);
+                    //Print a status message every 10000 iteration
+                    if (++iterations % 10000 == 0) {
+                        printSearchStatus(explored, frontier);
+                    }
+
+                    if(frontier.isEmpty()) {
+                        printSearchStatus(explored, frontier);
+                        return null;
+                    }
+
+                    s = frontier.pop();
+                    if(s.isGoalState()){
+                        System.err.println("SUBGOAL FOUND");
+                        
+                        for (int row=1; row<s.goals.length-1; row++) {
+                        	for (int col=1; col<s.goals[row].length-1; col++) {
+                        		
+                        		char goal = s.goals[row][col];
+                        		if ('A' <= goal && goal <= 'Z') {
+                        			System.err.println("INSERT WALL");
+                        			s.boxes[row][col] = 0;
+                        			s.walls[row][col] = true;
+                        		}
+                        	}
+                        }
+                        
+                        Action[][] subactions =  s.extractPlan();
+                        for (Action[] subaction : subactions) {
+                        	actions.addLast(subaction);
+//                        	System.err.println(Arrays.toString(subaction));
+                        }
+                        
+//                        while(!frontier.isEmpty()) {
+//                        	frontier.pop();
+//                        }
+                        
+                        
+                        break;
+                    }
+                    
+                    
+                    
+                    explored.add(s);
+
+
+
+                    ArrayList<State> States = s.getExpandedStates();
+                    for(int i = 0; i < States.size(); ++i){
+                        State expanded = States.get(i);
+                        if(!explored.contains(expanded) && !frontier.contains(expanded)) {
+                            frontier.add(expanded);
+                        }
                     }
                 }
             }
+            
+            Action[][] total_plan = actions.toArray(new Action[0][0]);
+            
+            return total_plan;
+            
+            
+            
+//            initialState.setGoalstate(subgoal.pollLast());
+//            frontier.add(initialState);
+//            HashSet<State> explored = new HashSet<>();
+//         
+//
+//            while (true) {
+//
+//                //Print a status message every 10000 iteration
+//                if (++iterations % 10000 == 0) {
+//                    printSearchStatus(explored, frontier);
+//                }
+//
+//                if(frontier.isEmpty()) {
+//                    printSearchStatus(explored, frontier);
+//                    return null;
+//                }
+//
+//                //State s = frontier.pop();
+//                if(s.isGoalState()){
+//                    printSearchStatus(explored, frontier);
+//                    System.err.println("GOAL FOUND");
+//                    System.err.println(Arrays.deepToString(s.extractPlan()));
+//                    return s.extractPlan();
+//                }
+//
+//                explored.add(s);
+//
+//
+//
+//                ArrayList<State> States = s.getExpandedStates();
+//                for(int i = 0; i < States.size(); ++i){
+//                    State expanded = States.get(i);
+//                    if(!explored.contains(expanded) && !frontier.contains(expanded)) {
+//                        frontier.add(expanded);
+//                    }
+//                }
+//            }
         }
     }
+    
 
     private static long startTime = System.nanoTime();
 

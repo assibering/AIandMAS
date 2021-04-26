@@ -8,10 +8,19 @@ public abstract class Heuristic
     ArrayList<Coordinates> goalSet = new ArrayList<>();
 
     public Heuristic(State initialState) {
-        for (int i = 0; i < State.goals.length; i++) {
-            for (int j = 0; j < State.goals[0].length; j++) {
-                if (State.goals[i][j] != 0) {
-                    goalSet.add(new Coordinates(i, j, State.goals[i][j]));
+    	
+//        for (int i = 0; i < initialState.goals.length; i++) {
+//            for (int j = 0; j < initialState.goals[0].length; j++) {
+//                if (initialState.goals[i][j] != 0) {
+//                    goalSet.add(new Coordinates(i, j, initialState.goals[i][j]));
+//                }
+//            }
+//        }
+        
+        for (int i = 0; i < initialState.goals.length; i++) {
+            for (int j = 0; j < initialState.goals[0].length; j++) {
+                if (initialState.goals[i][j] != 0) {
+                    goalSet.add(new Coordinates(i, j, initialState.goals[i][j]));
                 }
             }
         }
@@ -51,18 +60,18 @@ public abstract class Heuristic
                 manhattanDistancesPerColour[goalCoords.character - '0'] += Math.abs(goalCoords.x - agentX) + Math.abs(goalCoords.y - agentY);
                 long wallsInManhattanDistances1 = 0, wallsInManhattanDistances2 = 0;
                 for (int wallX = Math.min(goalCoords.x, agentX); wallX < Math.max(goalCoords.x, agentX); wallX++) {
-                    if (State.walls[wallX][goalCoords.y]) {
+                    if (s.walls[wallX][goalCoords.y]) {
                         wallsInManhattanDistances1++;
                     }
-                    if (State.walls[wallX][agentY]) {
+                    if (s.walls[wallX][agentY]) {
                         wallsInManhattanDistances2++;
                     }
                 }
                 for (int wallY = Math.min(goalCoords.y, agentY); wallY < Math.max(goalCoords.y, agentY); wallY++) {
-                    if (State.walls[goalCoords.x][wallY]) {
+                    if (s.walls[goalCoords.x][wallY]) {
                         wallsInManhattanDistances1++;
                     }
-                    if (State.walls[agentX][wallY]) {
+                    if (s.walls[agentX][wallY]) {
                         wallsInManhattanDistances2++;
                     }
                 }
@@ -88,18 +97,18 @@ public abstract class Heuristic
                         //Add walls in between
                         long wallsInManhattanDistances1 = 0, wallsInManhattanDistances2 = 0;
                         for (int wallX = Math.min(goalCoords.x, boxX); wallX < Math.max(goalCoords.x, boxX); wallX++) {
-                            if (State.walls[wallX][goalCoords.y]) {
+                            if (s.walls[wallX][goalCoords.y]) {
                                 wallsInManhattanDistances1++;
                             }
-                            if (State.walls[wallX][boxY]) {
+                            if (s.walls[wallX][boxY]) {
                                 wallsInManhattanDistances2++;
                             }
                         }
                         for (int wallY = Math.min(goalCoords.y, boxY); wallY < Math.max(goalCoords.y, boxY); wallY++) {
-                            if (State.walls[goalCoords.x][wallY]) {
+                            if (s.walls[goalCoords.x][wallY]) {
                                 wallsInManhattanDistances1++;
                             }
-                            if (State.walls[boxX][wallY]) {
+                            if (s.walls[boxX][wallY]) {
                                 wallsInManhattanDistances2++;
                             }
                         }
@@ -113,18 +122,18 @@ public abstract class Heuristic
                                 wallsInManhattanDistances1 = 0;
                                 wallsInManhattanDistances2 = 0;
                                 for (int wallX = Math.min(s.agentRows[agent], boxX); wallX < Math.max(s.agentRows[agent], boxX); wallX++) {
-                                    if (State.walls[wallX][s.agentCols[agent]]) {
+                                    if (s.walls[wallX][s.agentCols[agent]]) {
                                         wallsInManhattanDistances1++;
                                     }
-                                    if (State.walls[wallX][boxY]) {
+                                    if (s.walls[wallX][boxY]) {
                                         wallsInManhattanDistances2++;
                                     }
                                 }
                                 for (int wallY = Math.min(s.agentCols[agent], boxY); wallY < Math.max(s.agentCols[agent], boxY); wallY++) {
-                                    if (State.walls[s.agentRows[agent]][wallY]) {
+                                    if (s.walls[s.agentRows[agent]][wallY]) {
                                         wallsInManhattanDistances1++;
                                     }
-                                    if (State.walls[boxX][wallY]) {
+                                    if (s.walls[boxX][wallY]) {
                                         wallsInManhattanDistances2++;
                                     }
                                 }
