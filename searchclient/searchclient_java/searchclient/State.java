@@ -27,7 +27,7 @@ public class State {
         For example, this.walls[2] is an array of booleans for the third row.
         this.walls[row][col] is true if there's a wall at (row, col).
     */
-    public static boolean[][] walls;
+    public boolean[][] walls;
     public char[][] boxes;
     public char[][] goals;
 
@@ -66,7 +66,7 @@ public class State {
 
     // Constructs the state resulting from applying jointAction in parent.
     // Precondition: Joint action must be applicable and non-conflicting in parent state.
-    private State(State parent, Action[] jointAction) {
+    State(State parent, Action[] jointAction) {
         // Copy parent
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
         this.agentCols = Arrays.copyOf(parent.agentCols, parent.agentCols.length);
@@ -78,6 +78,7 @@ public class State {
         for (int i = 0; i < parent.goals.length; i++) {
             this.goals[i] = Arrays.copyOf(parent.goals[i], parent.goals[i].length);
         }
+        this.walls = parent.walls;
 
         // Set own parameters
         this.parent = parent;
@@ -141,7 +142,6 @@ public class State {
         int numAgents = this.agentRows.length;
 
         // Determine list of applicable actions for each individual agent.
-        //TODO: do not consider other agents now
         Action[][] applicableActions = new Action[numAgents][];
         for (int agent = 0; agent < numAgents; ++agent) {
             ArrayList<Action> agentActions = new ArrayList<>(Action.values().length);
@@ -166,7 +166,7 @@ public class State {
                 jointAction[agent] = applicableActions[agent][actionsPermutation[agent]];
             }
 
-            if (!this.isConflicting(jointAction)) {
+            if (!this.isConflicting(jointAction).isConflict()) {
                 expandedStates.add(new State(this, jointAction));
             }
 
@@ -194,7 +194,10 @@ public class State {
         return expandedStates;
     }
 
-    private boolean isApplicable(int agent, Action action) {
+    boolean isApplicable(int agent, Action action) {
+        return isApplicable(agent, action, false);
+    }
+    boolean isApplicable(int agent, Action action, boolean log) {
         int agentRow = this.agentRows[agent];
         int agentCol = this.agentCols[agent];
         Color agentColor = this.agentColors[agent];
@@ -219,7 +222,15 @@ public class State {
                 boxRow = destinationRow + action.boxRowDelta;
                 boxCol = destinationCol + action.boxColDelta;
                 if (box != 0 && boxRow < walls.length && boxRow >= 0 && boxCol >= 0 && boxCol < walls[0].length) {
-                    return this.cellIsFree(boxRow, boxCol) && boxColors[box - 65] == agentColor;
+                    return this.cellIsFree(boxRow, boxCol, log) && boxColors[box - 65] == agentColor;
+                }
+                if(log) {
+                    if(box == 0)
+                        System.out.println("#Applicability check fails due to wrong box colour.");
+                    if(boxRow >= walls.length || boxRow < 0)
+                        System.out.println("#Applicability check fails due to wrong row: " + boxRow);
+                    if(boxCol < 0 || boxCol >= walls[0].length)
+                        System.out.println("#Applicability check fails due to wrong column: " + boxCol);
                 }
                 return false;
 
@@ -230,7 +241,15 @@ public class State {
                 boxCol = agentCol;
                 box = this.boxes[boxRow - action.boxRowDelta][boxCol - action.boxColDelta];
                 if (box != 0 && destinationRow < walls.length && destinationRow >= 0 && destinationCol >= 0 && destinationCol < walls[0].length) {
-                    return this.cellIsFree(destinationRow, destinationCol) && boxColors[box - 65] == agentColor;
+                    return this.cellIsFree(destinationRow, destinationCol, log) && boxColors[box - 65] == agentColor;
+                }
+                if(log) {
+                    if(box == 0)
+                        System.out.println("#Applicability check fails due to wrong box colour.");
+                    if(destinationRow >= walls.length || destinationRow < 0)
+                        System.out.println("#Applicability check fails due to wrong row: " + destinationRow);
+                    if(destinationCol < 0 || destinationCol >= walls[0].length)
+                        System.out.println("#Applicability check fails due to wrong column: " + destinationCol);
                 }
                 return false;
         }
@@ -239,7 +258,7 @@ public class State {
         return false;
     }
 
-    private boolean isConflicting(Action[] jointAction) {
+    ConflictResult isConflicting(Action[] jointAction) {
         int numAgents = this.agentRows.length;
 
         int[] destinationRows = new int[numAgents]; // row of new cell to become occupied by action
@@ -292,23 +311,41 @@ public class State {
 
                 // Moving into same cell?
                 if (destinationRows[a1] == destinationRows[a2] && destinationCols[a1] == destinationCols[a2]) {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
 
                 if (boxRows[a1] == boxRows[a2] && boxCols[a1] == boxCols[a2]) {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
 
                 if (destinationRows[a1] == boxRows[a2] && destinationCols[a1] == boxCols[a2]) {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
             }
         }
 
-        return false;
+        return ConflictResult.noConflict();
     }
 
     private boolean cellIsFree(int row, int col) {
+        return cellIsFree(row, col, false);
+    }
+    private boolean cellIsFree(int row, int col, boolean log) {
+        if(walls[row][col]) {
+            if(log)
+                System.out.printf("#Check fails due to wall being present at [%d, %d]%n", row, col);
+            return false;
+        }
+        if(this.boxes[row][col] != 0) {
+            if(log)
+                System.out.printf("#Check fails due to box being present at [%d, %d]%n", row, col);
+            return false;
+        }
+        if(this.agentAt(row, col) != 0) {
+            if(log)
+                System.out.printf("#Check fails due to agent being present at [%d, %d]%n", row, col);
+            return false;
+        }
         return !walls[row][col] && this.boxes[row][col] == 0 && this.agentAt(row, col) == 0;
     }
 
