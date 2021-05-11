@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class SearchClient {
 
@@ -113,7 +112,7 @@ public class SearchClient {
                 }
             }
             boolean[][] wallsCopy = new boolean[walls.length][];
-            for(int i = 0; i < walls.length; i++) {
+            for (int i = 0; i < walls.length; i++) {
                 wallsCopy[i] = Arrays.copyOf(walls[i], walls[0].length);
             }
             agentResult.get(10).add(new State(agentRows, agentCols, agentColors, wallsCopy, globalBoxes, boxColors, globalGoals, 0));
@@ -135,7 +134,7 @@ public class SearchClient {
     }
 
     public static void main(String[] args)
-            throws IOException, InterruptedException, Exception {
+            throws Exception {
         // Use stderr to print to the console.
         System.err.println("SearchClient initializing. I am sending this using the error output stream.");
 
@@ -148,191 +147,123 @@ public class SearchClient {
         // Parse the level.
         BufferedReader serverMessages = new BufferedReader(new InputStreamReader(System.in, StandardCharsets.US_ASCII));
 
-        // State initialState = SearchClient.parseLevel(serverMessages);
         List<List<State>> initialSubgoalsState = SearchClient.parseLevelSubgoals(serverMessages);
-        // Select search strategy.
-        Frontier frontier;
-        // Search for a plan.
-        List<List<Action[]>> plans = new ArrayList<>();
+
+        // This is the whole state
         State initialState = initialSubgoalsState.get(10).get(0);
-        Heuristic heuristic = new HeuristicAStar(initialState);
+        // We ignore agents with no goals (most likely: agents that do not exist)
         initialSubgoalsState = initialSubgoalsState.subList(0, 10)
                 .stream()
                 .filter(list -> list.size() > 0)
                 .collect(Collectors.toList());
-        initialSubgoalsState.forEach(states -> states.sort(heuristic));
-        initialSubgoalsState.forEach(states -> plans.add(new ArrayList<>()));
-        initialSubgoalsState.sort((s1, s2) -> heuristic.compare(s1.get(0), s2.get(0)));
-        State lastState = initialSubgoalsState.get(0).get(0);
-        char[][] remainingBoxes = lastState.boxes;
+        // We sort all goals by their heuristic
+        Heuristic heuristic = new HeuristicAStar(initialState);
+        Heuristic finalHeuristic = heuristic;
+        initialSubgoalsState.forEach(states -> states.sort(finalHeuristic));
+        //initialSubgoalsState.sort((s1, s2) -> finalHeuristic.compare(s1.get(0), s2.get(0)));
+        // Prepare plans list
+        List<LinkedList<Action[]>> plans = new ArrayList<>();
+        initialSubgoalsState.forEach(states -> plans.add(new LinkedList<>()));
+        // We add empty state to start of subgoal list, so that when needed we can reach it in case we need to reschedule DONE
+        initialSubgoalsState.forEach(states -> states.add(1, states.get(0)));
 
-        for (List<State> agentStates : initialSubgoalsState) {
-            System.out.println("#Number of subgoals: " + agentStates.size());
-            for (State s : agentStates) {
-                if (remainingBoxes == null) {
-                    remainingBoxes = s.boxes;
-                }
-                lastState = new State(lastState.agentRows, lastState.agentCols, State.agentColors,
-                        lastState.walls, remainingBoxes, State.boxColors, s.goals, s.currentAgent);
-                int boxesCount = 0;
-                for (int i = 0; i < lastState.boxes.length; i++) {
-                    for (int j = 0; j < lastState.boxes[i].length; j++) {
-                        if (lastState.boxes[i][j] != 0) {
-                            System.out.println("#Existing box: " + lastState.boxes[i][j]);
-                            boxesCount++;
-                        }
-                    }
-                }
-                System.out.println("#Boxes left: " + boxesCount);
-                for (int i = 0; i < lastState.goals.length; i++) {
-                    lastState.goals[i] = Arrays.copyOf(s.goals[i], s.goals[i].length);
-                }
-                for (int i = 0; i < lastState.goals.length; i++) {
-                    for (int j = 0; j < lastState.goals[i].length; j++) {
-                        if (lastState.goals[i][j] != 0) {
-                            System.out.println("#Current goal: " + lastState.goals[i][j]);
-                        }
-                    }
-                }
-
-                if (args.length > 0) {
-                    switch (args[0].toLowerCase(Locale.ROOT)) {
-                        case "-bfs":
-                            frontier = new FrontierBFS();
-                            break;
-                        case "-dfs":
-                            frontier = new FrontierDFS();
-                            break;
-                        case "-astar":
-                            frontier = new FrontierBestFirst(new HeuristicAStar(lastState));
-                            break;
-                        case "-wastar":
-                            int w = 5;
-                            if (args.length > 1) {
-                                try {
-                                    w = Integer.parseUnsignedInt(args[1]);
-                                } catch (NumberFormatException e) {
-                                    System.err.println("Couldn't parse weight argument to -wastar as integer, using default.");
-                                }
-                            }
-                            frontier = new FrontierBestFirst(new HeuristicWeightedAStar(lastState, w));
-                            break;
-                        case "-greedy":
-                            frontier = new FrontierBestFirst(new HeuristicGreedy(lastState));
-                            break;
-                        default:
-                            frontier = new FrontierBFS();
-                            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
-                                    "-greedy to set the search strategy.");
-                    }
-                } else {
-                    frontier = new FrontierBFS();
-                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
-                            "set the search strategy.");
-                }
-                try {
-                    lastState = SearchClient.searchForLastState(lastState, frontier);
-                } catch (OutOfMemoryError ex) {
-                    System.err.println("Maximum memory usage exceeded.");
-                    lastState = null;
-                }
-
-                // Print plan to server.
-                if (lastState == null || lastState.extractPlan() == null) {
-                    System.err.println("Unable to solve level.");
-                    System.exit(0);
-                } else {
-                    System.err.format("Found solution of length %,d.\n", lastState.extractPlan().length);
-
-                    plans.get(lastState.currentAgent).addAll(Arrays.asList(lastState.extractPlan()));
-                }
-
-                //Preparing for next subgoal
-                //TODO: lead to better resolution of that issue than "oh, it's just a wall"
-                for (int i = 0; i < lastState.goals.length; i++) {
-                    for (int j = 0; j < lastState.goals[i].length; j++) {
-                        if (lastState.goals[i][j] != 0) {
-                            lastState.walls[i][j] = true;
-                            lastState.boxes[i][j] = 0;
-                        }
-                    }
-                }
-                if (boxesCount > 1) {
-                    remainingBoxes = lastState.boxes;
-                } else {
-                    remainingBoxes = null;
-                }
-            }
+        // Generate step list for first subgoal
+        for (int i = 0; i < initialSubgoalsState.size(); i++) {
+            buildActionsForFirstSubstate(args, plans, initialState, initialSubgoalsState, i);
         }
 
-        //Take pairs of actions
-        //Check if they are not conflicting
-        //If not, apply actions and move to next pair
-        //Otherwise try to NoOp some operations until conflict is resolved
         //TODO: consider how to avoid agents being stuck on goal spots of other agents
-        int[] counters = new int[plans.size()];
         List<Action[]> joinedPlan = new ArrayList<>();
         while (true) {
-            Action[] jointAction = new Action[plans.size()];
-            int maxxedCounters = 0;
-            for (int i = 0; i < plans.size(); i++) {
-                if (counters[i] >= plans.get(i).size()) {
-                    jointAction[i] = Action.NoOp;
-                    maxxedCounters++;
-                } else {
-                    jointAction[i] = plans.get(i).get(counters[i])[i];
-                    counters[i] = counters[i] + 1;
-                }
-            }
-            if(maxxedCounters == plans.size()) {
+            //Stop working if all subgoals have been considered
+            if (initialSubgoalsState.stream().allMatch(subgoals -> subgoals.size() <= 1) &&
+                    plans.stream().allMatch(plan -> plan.size() == 0)) {
                 break;
             }
-            for(int i = 0; i < plans.size(); i++) {
-                if(!initialState.isApplicable(i, jointAction[i], true)) {
+
+            Action[] jointAction = new Action[plans.size()];
+            for (int i = 0; i < plans.size(); i++) {
+                System.out.printf("#Index: %d, remaining subgoals size: %d, remaining plans size: %d\n",
+                        i, initialSubgoalsState.get(i).size(), plans.get(i).size());
+                if (plans.get(i).isEmpty()) {
+                    jointAction[i] = Action.NoOp;
+                    //If we have no more actions left, we plan for new goal
+                    //If no plan has been reached (e.g., could not find a solution), we move on
+                    //As next iteration will calculate for another goal or with different state
+                    if (initialSubgoalsState.get(i).size() > 1) {
+                        System.out.printf("#Doing replanning on agent %d\n", i);
+                        buildActionsForFirstSubstate(args, plans, initialState, initialSubgoalsState, i);
+                        if (!plans.get(i).isEmpty())
+                            jointAction[i] = plans.get(i).poll()[i];
+                        else {
+                            Action[] noOpAction = new Action[plans.size()];
+                            Arrays.fill(noOpAction, Action.NoOp);
+                            for (int j = 0; j < 10; j++) {
+                                plans.get(i).add(noOpAction);
+                            }
+                        }
+                    }
+                } else {
+                    // We pull the next action
+                    jointAction[i] = plans.get(i).poll()[i];
+                }
+            }
+
+            //DEBUG ONLY: stop working if plan above 1000 iterations
+            if (initialState.g() > 1000)
+                break;
+            //Check every action for being applicable
+            for (int i = 0; i < plans.size(); i++) {
+                //If action is no longer applicable, then replan or NoOp
+                if (!initialState.isApplicable(i, jointAction[i], true)) {
                     System.out.printf("#Action %s for agent: %d in position [%d,%d] is not applicable%n",
                             jointAction[i], i, initialState.agentRows[i], initialState.agentCols[i]);
-                    jointAction[i] = Action.NoOp;
-                    counters[i] = counters[i] - 1;
+                    //Reschedule NoOping agent to current goal or NoOp
+                    boolean shouldReschedule = new Random().nextBoolean();
+                    if (shouldReschedule) {
+                        heuristic = new HeuristicAStar(initialState);
+                        var newSubgoals = initialSubgoalsState.get(i).subList(1, initialSubgoalsState.get(i).size());
+                        newSubgoals.sort(heuristic);
+                        newSubgoals.add(0, newSubgoals.get(0));
+                        initialSubgoalsState.set(i, newSubgoals);
+                        buildActionsForFirstSubstate(args, plans, initialState, initialSubgoalsState, i);
+                        jointAction[i] = Action.NoOp;
+                        if (!plans.get(i).isEmpty())
+                            jointAction[i] = plans.get(i).poll()[i];
+                    } else {
+                        Action[] previousAction = new Action[plans.size()];
+                        Arrays.fill(previousAction, Action.NoOp);
+                        previousAction[i] = jointAction[i];
+                        plans.get(i).add(0, previousAction);
+                        //NoOp in order to let another agent through
+                        jointAction[i] = Action.NoOp;
+                    }
                 }
             }
+            //Check if any conflict exists now and resolve it with a NoOp
             ConflictResult conflictCheck = initialState.isConflicting(jointAction);
-
-            if (!conflictCheck.isConflict()) {
-                //Thread.sleep(1000);
-                System.out.println("#Action to be added: " + Arrays.toString(jointAction));
-                System.out.println("#Current step: " + initialState.g());
-                initialState = new State(initialState, jointAction);
-                joinedPlan.add(jointAction);
-                if(joinedPlan.size() > 300)
-                    break;
-            } else {
+            while (conflictCheck.isConflict()) {
                 //Select the culprit at random
-                int randomResult = new Random().nextInt();
-                int noOpAgent = randomResult == 0 ? conflictCheck.agent1 : conflictCheck.agent2;
-                int continuingAgent = randomResult == 1 ? conflictCheck.agent1 : conflictCheck.agent2;
+                boolean randomResult = new Random().nextBoolean();
+                int noOpAgent = randomResult ? conflictCheck.agent1 : conflictCheck.agent2;
                 System.out.println("#Agent to blame: " + noOpAgent);
-
-                //Roll back all counters
-                for(int i = 0; i < plans.size(); i++) {
-                    counters[i] = counters[i] - 1;
-                }
-                //Add NoOp at current point
-                Action[] noOpAction = new Action[plans.size()];
-                Arrays.fill(noOpAction, Action.NoOp);
-                if(plans.get(noOpAgent).get(counters[noOpAgent])[noOpAgent] != Action.NoOp)
-                    plans.get(noOpAgent).add(counters[noOpAgent], noOpAction);
-                System.out.println("#Next three actions for blamed agent: " +
-                        "[" + plans.get(noOpAgent).get(counters[noOpAgent])[noOpAgent] + ", " +
-                        plans.get(noOpAgent).get(counters[noOpAgent]+1)[noOpAgent] + ", " +
-                        plans.get(noOpAgent).get(counters[noOpAgent]+2)[noOpAgent] + "]"
-                );
-                System.out.println("#Next three actions for continuing agent: " +
-                        "[" + plans.get(continuingAgent).get(counters[continuingAgent])[continuingAgent] + ", " +
-                        plans.get(continuingAgent).get(counters[continuingAgent]+1)[continuingAgent] + ", " +
-                        plans.get(continuingAgent).get(counters[continuingAgent]+2)[continuingAgent] + "]"
-                );
+                //Retain action to be taken
+                Action[] previousAction = new Action[plans.size()];
+                Arrays.fill(previousAction, Action.NoOp);
+                previousAction[noOpAgent] = jointAction[noOpAgent];
+                plans.get(noOpAgent).add(0, previousAction);
+                //NoOp in order to let another agent through
+                jointAction[noOpAgent] = Action.NoOp;
+                //Check if any conflict is left
+                conflictCheck = initialState.isConflicting(jointAction);
             }
+            // As all conflicts are resolved, we make a joint action
+            System.out.println("#Action to be added: " + Arrays.toString(jointAction));
+            System.out.println("#Current step: " + initialState.g());
+            initialState = new State(initialState, jointAction);
+            joinedPlan.add(jointAction);
         }
+        //Send list of actions to server
         for (Action[] jointAction : joinedPlan) {
             System.out.println("#Action to be taken: " + Arrays.toString(jointAction));
         }
@@ -346,5 +277,185 @@ public class SearchClient {
             // We must read the server's response to not fill up the stdin buffer and block the server.
             serverMessages.readLine();
         }
+    }
+
+    private static void buildActionsForFirstSubstate(String[] args, List<LinkedList<Action[]>> plans,
+                                                     State originalState, List<List<State>> subgoals,
+                                                     int selectedAgent) {
+        Frontier frontier;
+        if (subgoals.get(selectedAgent).size() < 2) {
+            return;
+        }
+
+        //Grab first existing state
+        State s = subgoals.get(selectedAgent).get(1);
+        //This moves current goal to fallback position, in case we need to reconsider it again
+        subgoals.get(selectedAgent).remove(0);
+        //We create a new state, with current state's position of agents
+        //And out-of-scope boxes and reached goals as walls
+        //And filtered goals as not to overlap with walls
+        State usedState = new State(originalState.agentRows, originalState.agentCols, State.agentColors,
+                includeBoxesAsWalls(s.boxes, originalState.boxes, originalState.goals, originalState.walls),
+                filter(s.boxes, originalState.boxes, originalState.goals),
+                State.boxColors, removeReachedGoals(s.goals, originalState.boxes), s.currentAgent);
+        int boxesCount = 0;
+        for (int i = 0; i < usedState.boxes.length; i++) {
+            for (int j = 0; j < usedState.boxes[i].length; j++) {
+                if (usedState.boxes[i][j] != 0) {
+                    System.out.println("#Existing box: " + usedState.boxes[i][j]);
+                    boxesCount++;
+                }
+            }
+        }
+        System.out.println("#Boxes left: " + boxesCount);
+        for (int i = 0; i < usedState.goals.length; i++) {
+            usedState.goals[i] = Arrays.copyOf(s.goals[i], s.goals[i].length);
+        }
+        for (int i = 0; i < usedState.goals.length; i++) {
+            for (int j = 0; j < usedState.goals[i].length; j++) {
+                if (usedState.goals[i][j] != 0) {
+                    System.out.println("#Current goal: " + usedState.goals[i][j]);
+                }
+            }
+        }
+
+        frontier = createFrontier(args, usedState);
+        try {
+            usedState = SearchClient.searchForLastState(usedState, frontier);
+        } catch (OutOfMemoryError ex) {
+            System.err.println("Maximum memory usage exceeded.");
+            usedState = null;
+        }
+
+        // Print plan to server.
+        if (usedState == null) {
+            System.err.println("Unable to solve level, moving to the back of the list.");
+            //TODO: add state to back of subgoal list DONE
+            subgoals.get(selectedAgent).add(s);
+        } else {
+            System.err.format("Found solution of length %,d.\n", usedState.extractPlan().length);
+            //TODO: set to new list rather than add to current one DONE
+            plans.set(usedState.currentAgent, new LinkedList<>(Arrays.asList(usedState.extractPlan())));
+        }
+    }
+
+    private static Frontier createFrontier(String[] args, State usedState) {
+        Frontier frontier;
+        if (args.length > 0) {
+            switch (args[0].toLowerCase(Locale.ROOT)) {
+                case "-bfs":
+                    frontier = new FrontierBFS();
+                    break;
+                case "-dfs":
+                    frontier = new FrontierDFS();
+                    break;
+                case "-astar":
+                    frontier = new FrontierBestFirst(new HeuristicAStar(usedState));
+                    break;
+                case "-wastar":
+                    int w = 5;
+                    if (args.length > 1) {
+                        try {
+                            w = Integer.parseUnsignedInt(args[1]);
+                        } catch (NumberFormatException e) {
+                            System.err.println("Couldn't parse weight argument to -wastar as integer, using default.");
+                        }
+                    }
+                    frontier = new FrontierBestFirst(new HeuristicWeightedAStar(usedState, w));
+                    break;
+                case "-greedy":
+                    frontier = new FrontierBestFirst(new HeuristicGreedy(usedState));
+                    break;
+                default:
+                    frontier = new FrontierBFS();
+                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
+                            "-greedy to set the search strategy.");
+            }
+        } else {
+            frontier = new FrontierBFS();
+            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
+                    "set the search strategy.");
+        }
+        return frontier;
+    }
+
+    private static char[][] filter(char[][] subgoalBoxes, char[][] totalStateBoxes, char[][] totalStateGoals) {
+        char[][] result = new char[subgoalBoxes.length][subgoalBoxes[0].length];
+        char letter = 0;
+        for (int i = 0; i < subgoalBoxes.length; i++) {
+            for (int j = 0; j < subgoalBoxes[i].length; j++) {
+                if (subgoalBoxes[i][j] != 0) {
+                    letter = subgoalBoxes[i][j];
+                    break;
+                }
+            }
+            if (letter != 0)
+                break;
+        }
+        for (int i = 0; i < totalStateBoxes.length; i++) {
+            for (int j = 0; j < totalStateBoxes[i].length; j++) {
+                if (letter == totalStateBoxes[i][j] && totalStateGoals[i][j] != totalStateBoxes[i][j]) {
+                    result[i][j] = letter;
+                } else {
+                    result[i][j] = 0;
+                }
+            }
+        }
+        return result;
+    }
+
+    public static boolean[][] includeBoxesAsWalls(char[][] subgoalBoxes,
+                                                  char[][] totalStateBoxes,
+                                                  char[][] totalStateGoals,
+                                                  boolean[][] totalStateWalls) {
+        boolean[][] resultWalls = new boolean[totalStateWalls.length][totalStateWalls[0].length];
+
+        char letter = 0;
+        for (int i = 0; i < subgoalBoxes.length; i++) {
+            for (int j = 0; j < subgoalBoxes[i].length; j++) {
+                if (subgoalBoxes[i][j] != 0) {
+                    letter = subgoalBoxes[i][j];
+                    break;
+                }
+            }
+            if (letter != 0)
+                break;
+        }
+
+        for (int i = 0; i < totalStateWalls.length; i++) {
+            for (int j = 0; j < totalStateWalls[i].length; j++) {
+                //Keep existing walls
+                if (totalStateWalls[i][j])
+                    resultWalls[i][j] = true;
+                    //Treat boxes from other subgoals as walls
+                else if (totalStateBoxes[i][j] != 0 && totalStateBoxes[i][j] != letter) {
+                    resultWalls[i][j] = true;
+                }
+                //Treat achieved goals as walls
+                else if (totalStateBoxes[i][j] != 0 && totalStateBoxes[i][j] == totalStateGoals[i][j]) {
+                    resultWalls[i][j] = true;
+                }
+            }
+        }
+
+        return resultWalls;
+    }
+
+    public static char[][] removeReachedGoals(char[][] subgoalGoals,
+                                              char[][] totalStateBoxes) {
+        char[][] resultGoals = new char[subgoalGoals.length][subgoalGoals[0].length];
+
+        for (int i = 0; i < subgoalGoals.length; i++) {
+            for (int j = 0; j < subgoalGoals[i].length; j++) {
+                //Keep existing walls
+                if (subgoalGoals[i][j] != 0 && totalStateBoxes[i][j] == subgoalGoals[i][j]) {
+                    resultGoals[i][j] = subgoalGoals[i][j];
+                } else {
+                    resultGoals[i][j] = 0;
+                }
+            }
+        }
+
+        return resultGoals;
     }
 }

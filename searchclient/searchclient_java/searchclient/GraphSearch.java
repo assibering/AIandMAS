@@ -42,7 +42,7 @@ public class GraphSearch {
             State s = frontier.pop();
             if (s.isGoalState()) {
                 printSearchStatus(explored, frontier);
-                return s; //TODO changed
+                return s;
             }
 
             explored.add(s);
