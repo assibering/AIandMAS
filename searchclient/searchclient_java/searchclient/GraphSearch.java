@@ -1,9 +1,12 @@
 package searchclient;
 
+//import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+
+//import javax.swing.Action;
 
 public class GraphSearch {
 
@@ -19,6 +22,7 @@ public class GraphSearch {
             return new Action[][] {
                 {Action.PushEE}
             };
+            
         } else {
             //Part 2:
             //Now try to implement the Graph-Search algorithm from R&N figure 3.7
@@ -68,8 +72,17 @@ public class GraphSearch {
             
             LinkedList<Action[]> actions = new LinkedList<Action[]>();
             
+            
+            LinkedList<Action[][]> individualplans = new LinkedList<Action[][]>();
+            
+            
+            
             State s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
             		initialState.walls, initialState.boxes, State.boxColors, initialState.goals);
+            
+            searchclient.Color[] initcoloragent =  s.agentColors;
+            searchclient.Color[] initcolorbox =  s.boxColors;
+            
             
             int agents = s.agentRows.length;
             
@@ -78,10 +91,36 @@ public class GraphSearch {
             for (int agent=0; agent<agents; agent++) {
             	
             	subgoals = MAsubgoals[agent];
+            	
+            	System.err.println("AGENT COLORS");
+        		System.err.println(Arrays.toString(s.agentColors));
+        		
+        		System.err.println("BOX COLORS");
+        		System.err.println(Arrays.toString(s.boxColors));
+            	
+            	
             	int[] aRows = s.getSingleAgentRow(agent);
             	int[] aCols = s.getSingleAgentCol(agent);
             	char[][] aBoxes = s.getSingleAgentBoxes(agent);
-            	boolean first_subgoal = true;
+            	
+            	
+            	searchclient.Color currentColor = initialState.agentColors[agent];
+            	searchclient.Color[] agentColor = new searchclient.Color[initialState.agentColors.length];
+            	searchclient.Color[] boxColor = new searchclient.Color[initialState.boxColors.length];
+            	
+            	agentColor[0] = currentColor;
+            	for (int i=0; i<boxColor.length; i++) {
+            		if (initialState.boxColors[i] == currentColor) {
+            			boxColor[i] = currentColor;
+            		}
+            	}
+            	
+            	System.err.println(Arrays.toString(boxColor));
+            	System.err.println(Arrays.toString(agentColor));
+            	System.err.println(Arrays.toString(s.boxColors));
+            	System.err.println(Arrays.toString(s.agentColors));
+            	
+//            	char[][] aBoxes = initialState.boxes;
             	
             	actions = new LinkedList<Action[]>(); 
             	
@@ -97,8 +136,8 @@ public class GraphSearch {
 //                		}
 //            		}
             		
-                 	s = new State(aRows, aCols, State.agentColors,
-                 		s.walls, aBoxes, State.boxColors, subgoal);
+                 	s = new State(aRows, aCols, agentColor,
+                 		s.walls, aBoxes, boxColor, subgoal);
                  	
                  	System.err.println("SUBGOAL");
                  	for (int i=0; i<subgoal.length; i++) {
@@ -108,9 +147,29 @@ public class GraphSearch {
             		for (int i=0; i<aBoxes.length; i++) {
             			System.err.println(Arrays.toString(s.boxes[i]));
             		}
+            		
+            		System.err.println("WALLS");
+            		for (int i=0; i<s.walls.length; i++) {
+            			for (int j=0; j<s.walls[i].length; j++) {
+            				if (s.walls[i][j]) {
+                				System.err.print("1,");
+                			}
+            				else {
+                				System.err.print("0,");
+                			}
+            			}
+            			System.err.println();
+            		}
+            		
+            		
             		System.err.println("AGENT POSITION");
             		System.err.println("Row: " + Arrays.toString(s.agentRows) + ", Col: " + Arrays.toString(s.agentCols));
             		
+            		System.err.println("AGENT COLORS");
+            		System.err.println(Arrays.toString(s.agentColors));
+            		
+            		System.err.println("BOX COLORS");
+            		System.err.println(Arrays.toString(s.boxColors));
                  	
                  	if (greedy) {
                  		frontier = new FrontierBestFirst(new HeuristicGreedy(s));
@@ -140,14 +199,11 @@ public class GraphSearch {
                              return null;
                          }
                          
-                         System.err.println(frontier.size());
 
                          s = frontier.pop();
                          if(s.isGoalState()){
                         	System.err.println("SUBGOAL FOUND");
-                        	for (int i=0; i<subgoal.length; i++) {
-                    			System.err.println(Arrays.toString(s.goals[i]));
-                    		}
+
                           	for (int i=0; i<subgoal.length; i++) {
                      			System.err.println(Arrays.toString(s.boxes[i]));
                      		}
@@ -169,15 +225,15 @@ public class GraphSearch {
                             	System.err.println(Arrays.toString(subaction));
                              	actions.addLast(subaction);
                              }
-                             aRows = s.getSingleAgentRow(agent);
-                         	 aCols = s.getSingleAgentCol(agent);
-                         	 aBoxes = s.getSingleAgentBoxes(agent);
+                             aRows = s.getSingleAgentRow(0);
+                         	 aCols = s.getSingleAgentCol(0);
+                         	 aBoxes = s.getSingleAgentBoxes(0);
                          	 
                          	 while (!frontier.isEmpty()) {
                          		 frontier.pop();
                          	 }
                             
-                         	first_subgoal = false;
+                         	//first_subgoal = false;
                          	System.err.println();
                              break;
                          }
@@ -199,13 +255,42 @@ public class GraphSearch {
                  }
             	 
             	 planner.addPlan(actions.toArray(new Action[0][0]));
-            	 System.err.println(Arrays.toString(planner.getJointAction(1)));
             	 
-            	 s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
-                 		initialState.walls, initialState.boxes, State.boxColors, initialState.goals);
+            	 individualplans.add(actions.toArray(new Action[0][0]));
+            	 
+            	 
+            	 
+            	 s = new State(initialState.agentRows, initialState.agentCols, initcoloragent,
+                 		initialState.walls, initialState.boxes, initcolorbox, initialState.goals);
             }
             System.err.println("DONE");
-            return actions.toArray(new Action[0][0]);
+            
+            int arrayrows = Math.max(individualplans.get(0).length, individualplans.get(1).length);
+            int arraycols = individualplans.size();
+            
+            Action[][] finalactions = new Action[arrayrows][arraycols];
+            
+            for (int i=0; i<arrayrows; i++) {
+            	if (i<individualplans.get(0).length) {
+            		finalactions[i][0] = individualplans.get(0)[i][0];
+            	}
+            	else {
+            		finalactions[i][0] = Action.NoOp;
+            	}
+            }
+            
+            for (int i=0; i<individualplans.get(1).length; i++) {
+            	if (i<individualplans.get(1).length) {
+            		finalactions[i][1] = individualplans.get(1)[i][0];
+            	}
+            	else {
+            		finalactions[i][1] = Action.NoOp;
+            	}
+            }
+            
+            return finalactions;
+            
+            //return actions.toArray(new Action[0][0]);
         }
     }
     
