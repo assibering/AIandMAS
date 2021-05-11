@@ -1,5 +1,6 @@
 package searchclient;
 
+//import java.awt.Desktop.Action;
 //import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -265,28 +266,46 @@ public class GraphSearch {
             }
             System.err.println("DONE");
             
-            int arrayrows = Math.max(individualplans.get(0).length, individualplans.get(1).length);
             int arraycols = individualplans.size();
+            int arrayrows = 0;
+            
+            for (int i=0; i<arraycols; i++) {
+            	if (individualplans.get(i).length > arrayrows) {
+            		arrayrows = individualplans.get(i).length;
+            	}
+            }
+            
             
             Action[][] finalactions = new Action[arrayrows][arraycols];
             
-            for (int i=0; i<arrayrows; i++) {
-            	if (i<individualplans.get(0).length) {
-            		finalactions[i][0] = individualplans.get(0)[i][0];
-            	}
-            	else {
-            		finalactions[i][0] = Action.NoOp;
+            for (int i=0; i<arraycols; i++) {
+            	for (int j=0; j<arrayrows; j++) {
+            		if (j < individualplans.get(i).length) {
+            			finalactions[j][i] = individualplans.get(i)[j][0];
+            		}
+            		else {
+            			finalactions[j][i] = Action.NoOp;
+            		}
             	}
             }
             
-            for (int i=0; i<individualplans.get(1).length; i++) {
-            	if (i<individualplans.get(1).length) {
-            		finalactions[i][1] = individualplans.get(1)[i][0];
-            	}
-            	else {
-            		finalactions[i][1] = Action.NoOp;
-            	}
-            }
+//            for (int i=0; i<arrayrows; i++) {
+//            	if (i<individualplans.get(0).length) {
+//            		finalactions[i][0] = individualplans.get(0)[i][0];
+//            	}
+//            	else {
+//            		finalactions[i][0] = Action.NoOp;
+//            	}
+//            }
+//            
+//            for (int i=0; i<individualplans.get(1).length; i++) {
+//            	if (i<individualplans.get(1).length) {
+//            		finalactions[i][1] = individualplans.get(1)[i][0];
+//            	}
+//            	else {
+//            		finalactions[i][1] = Action.NoOp;
+//            	}
+//            }
             
             return finalactions;
             
