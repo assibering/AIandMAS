@@ -238,15 +238,9 @@ class HeuristicAStar
     }
 }
 
-class HeuristicAStarFactory implements HeuristicFactory {
-    public Heuristic makeHeuristic(State initialState) {
-        return new HeuristicAStar(initialState);
-    }
-}
-
 class HeuristicWeightedAStar
         extends Heuristic {
-    private final int w;
+    private int w;
 
     public HeuristicWeightedAStar(State initialState, int w) {
         super(initialState);
@@ -264,18 +258,6 @@ class HeuristicWeightedAStar
     }
 }
 
-class HeuristicWeighedAStarFactory implements HeuristicFactory {
-    int w;
-
-    public HeuristicWeighedAStarFactory(int w) {
-        this.w = w;
-    }
-
-    public Heuristic makeHeuristic(State initialState) {
-        return new HeuristicWeightedAStar(initialState, w);
-    }
-}
-
 class HeuristicGreedy
         extends Heuristic {
     public HeuristicGreedy(State initialState) {
@@ -290,12 +272,6 @@ class HeuristicGreedy
     @Override
     public String toString() {
         return "greedy evaluation";
-    }
-}
-
-class HeuristicGreedyFactory implements HeuristicFactory {
-    public Heuristic makeHeuristic(State initialState) {
-        return new HeuristicGreedy(initialState);
     }
 }
 
@@ -319,8 +295,4 @@ class Coordinates {
             return false;
         }
     }
-}
-
-interface HeuristicFactory {
-    public Heuristic makeHeuristic(State initialState);
 }
