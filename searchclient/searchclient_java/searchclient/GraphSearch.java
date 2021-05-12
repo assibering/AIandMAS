@@ -147,6 +147,7 @@ public class GraphSearch {
                  		outer1:
                  		for (int i=0; i<subgoalS.length; i++) {
                  			for (int j=0; j<subgoalS[i].length; j++) {
+                 				System.err.println(subgoalS[i][j]);
                  				if (subgoalS[i][j] != 0) {
                  					goal_coord = new int[] {i, j};
                  					break outer1;
@@ -154,7 +155,7 @@ public class GraphSearch {
                  			}
                  		}
                  		
-                 		System.err.println("GOALCORD: " + goal_coord);
+                 		System.err.println("GOALCORD: " + Arrays.toString(goal_coord));
                  		
                  		int[][] dist_grid = s.getdistance(goal_coord[0], goal_coord[1]);
                  		

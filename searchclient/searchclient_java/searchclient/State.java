@@ -219,7 +219,6 @@ public class State
     	char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
     	String agentString = Integer.toString(0);
     	char agentchar = agentString.charAt(0);
-    	System.err.println("AGENTCHAR" + agentchar);
     	LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
     	char subgoal_char = 0;
     	
@@ -231,6 +230,11 @@ public class State
     				break outerloop1;
     			}
     		}
+    	}
+    	
+    	if (subgoal_char >= '0' && subgoal_char <= '9') {
+    		subgoal_split.add(subgoal);
+    		return subgoal_split;
     	}
     	
     	outerloop2:
