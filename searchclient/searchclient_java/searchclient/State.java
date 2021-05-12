@@ -233,6 +233,11 @@ public class State
     		}
     	}
     	
+    	if (subgoal_char >= '0' && subgoal_char <= '9') {
+    		subgoal_split.addFirst(subgoal);
+    		return subgoal_split;
+    	}
+    	
     	outerloop2:
     	for (int i=1; i<this.boxes.length-1; i++) {
     		for (int j=1; j<this.boxes[i].length; j++) {
