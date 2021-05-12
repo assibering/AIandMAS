@@ -92,14 +92,7 @@ public class GraphSearch {
             for (int agent=0; agent<agents; agent++) {
             	
             	subgoals = MAsubgoals[agent];
-            	
-            	System.err.println("AGENT COLORS");
-        		System.err.println(Arrays.toString(s.agentColors));
-        		
-        		System.err.println("BOX COLORS");
-        		System.err.println(Arrays.toString(s.boxColors));
-            	
-            	
+            
             	int[] aRows = s.getSingleAgentRow(agent);
             	int[] aCols = s.getSingleAgentCol(agent);
             	char[][] aBoxes = s.getSingleAgentBoxes(agent);
@@ -148,20 +141,6 @@ public class GraphSearch {
             		for (int i=0; i<aBoxes.length; i++) {
             			System.err.println(Arrays.toString(s.boxes[i]));
             		}
-            		
-            		System.err.println("WALLS");
-            		for (int i=0; i<s.walls.length; i++) {
-            			for (int j=0; j<s.walls[i].length; j++) {
-            				if (s.walls[i][j]) {
-                				System.err.print("1,");
-                			}
-            				else {
-                				System.err.print("0,");
-                			}
-            			}
-            			System.err.println();
-            		}
-            		
             		
             		System.err.println("AGENT POSITION");
             		System.err.println("Row: " + Arrays.toString(s.agentRows) + ", Col: " + Arrays.toString(s.agentCols));

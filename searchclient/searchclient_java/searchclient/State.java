@@ -197,7 +197,65 @@ public class State
     		subgoalsBox.addFirst(priosubgoal);
     	}
     	
-    	return subgoalsBox;
+    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
+    	
+    	for (char[][] subgoal : subgoalsBox) {
+    		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
+    		subgoal_split = splitSubgoal(subgoal, agent);
+    		for (char[][] subgoalS : subgoal_split) {
+    			subgoal_split_all.addLast(subgoalS);
+    		}
+    	}
+    	
+    	return subgoal_split_all;
+    }
+    
+    
+    private LinkedList<char[][]> splitSubgoal(char[][] subgoal, int agent) {
+    	
+    	char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
+    	String agentString = Integer.toString(0);
+    	char agentchar = agentString.charAt(0);
+    	System.err.println("AGENTCHAR" + agentchar);
+    	LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
+    	char subgoal_char = 0;
+    	
+    	outerloop1:
+    	for (int i=1; i<subgoal.length-1; i++) {
+    		for (int j=1; j<subgoal[i].length; j++) {
+    			if (subgoal[i][j] != 0) {
+    				subgoal_char = subgoal[i][j];
+    				break outerloop1;
+    			}
+    		}
+    	}
+    	
+    	outerloop2:
+    	for (int i=1; i<this.boxes.length-1; i++) {
+    		for (int j=1; j<this.boxes[i].length; j++) {
+    			char boxchar = this.boxes[i][j];
+    			if (boxchar == subgoal_char) {
+    				if (this.cellIsFree(i-1,j)) {
+    					findBoxGoal[i-1][j] = agentchar;
+    					break outerloop2;
+    				} else if (this.cellIsFree(i+1,j)) {
+    					findBoxGoal[i+1][j] = agentchar;
+    					break outerloop2;
+    				} else if (this.cellIsFree(i,j-1)) {
+    					findBoxGoal[i][j-1] = agentchar;
+    					break outerloop2;
+    				} else if (this.cellIsFree(i,j+1)) {
+    					findBoxGoal[i][j+1] = agentchar;
+    					break outerloop2;
+    				}
+    			}
+    		}
+    	}
+    	
+    	subgoal_split.addFirst(findBoxGoal);
+    	subgoal_split.addLast(subgoal);
+    	
+    	return subgoal_split;
     }
     
     
