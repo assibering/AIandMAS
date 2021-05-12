@@ -229,7 +229,7 @@ class HeuristicAStar
 
     @Override
     public int f(State s) {
-        return s.g() + this.h(s);
+        return s.g() + this.h_new(s);
     }
 
     @Override
@@ -249,7 +249,7 @@ class HeuristicWeightedAStar
 
     @Override
     public int f(State s) {
-        return s.g() + this.w * this.h(s);
+        return s.g() + this.w * this.h_new(s);
     }
 
     @Override
