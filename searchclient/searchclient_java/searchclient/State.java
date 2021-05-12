@@ -197,21 +197,21 @@ public class State
     		subgoalsBox.addFirst(priosubgoal);
     	}
     	
-    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
+//    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
+//    	
+//    	for (char[][] subgoal : subgoalsBox) {
+//    		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
+//    		subgoal_split = splitSubgoal(subgoal, agent);
+//    		for (char[][] subgoalS : subgoal_split) {
+//    			subgoal_split_all.addLast(subgoalS);
+//    		}
+//    	}
     	
-    	for (char[][] subgoal : subgoalsBox) {
-    		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
-    		subgoal_split = splitSubgoal(subgoal, agent);
-    		for (char[][] subgoalS : subgoal_split) {
-    			subgoal_split_all.addLast(subgoalS);
-    		}
-    	}
-    	
-    	return subgoal_split_all;
+    	return subgoalsBox;
     }
     
     
-    private LinkedList<char[][]> splitSubgoal(char[][] subgoal, int agent) {
+    public LinkedList<char[][]> splitSubgoal(char[][] subgoal, int agent) {
     	
     	char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
     	String agentString = Integer.toString(0);
@@ -248,6 +248,21 @@ public class State
     					findBoxGoal[i][j+1] = agentchar;
     					break outerloop2;
     				}
+    				
+    				if (!this.walls[i-1][j]) {
+    					findBoxGoal[i-1][j] = agentchar;
+    					break outerloop2;
+    				} else if (!this.walls[i+1][j]) {
+    					findBoxGoal[i+1][j] = agentchar;
+    					break outerloop2;
+    				} else if (!this.walls[i][j-1]) {
+    					findBoxGoal[i][j-1] = agentchar;
+    					break outerloop2;
+    				} else if (!this.walls[i][j+1]) {
+    					findBoxGoal[i][j+1] = agentchar;
+    					break outerloop2;
+    				}
+    				
     			}
     		}
     	}
