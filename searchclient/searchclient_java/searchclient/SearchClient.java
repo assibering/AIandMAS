@@ -119,7 +119,7 @@ public class SearchClient
         // End
         // line is currently "#end"
 
-        return new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals);
+        return new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals, new int[boxes.length][boxes[0].length]);
     }
 
     public static Action[][] search(State initialState, Frontier frontier)

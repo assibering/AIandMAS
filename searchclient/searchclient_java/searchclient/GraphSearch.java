@@ -79,7 +79,7 @@ public class GraphSearch {
             
             
             State s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
-            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals);
+            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
             
             searchclient.Color[] initcoloragent =  s.agentColors;
             searchclient.Color[] initcolorbox =  s.boxColors;
@@ -133,14 +133,34 @@ public class GraphSearch {
 //            		}
             		
                  	s = new State(aRows, aCols, agentColor,
-                 		s.walls, aBoxes, boxColor, subgoal);
+                 		s.walls, aBoxes, boxColor, subgoal, s.distancegrid);
+                 	
+                 	
                  	
                  	subgoal_split = s.splitSubgoal(s.goals, agent);
                  	
+                 	
                  	for (char[][] subgoalS : subgoal_split) {
                  		
+                 		int[] goal_coord = new int[] {0, 0};
+                 		
+                 		outer1:
+                 		for (int i=0; i<subgoalS.length; i++) {
+                 			for (int j=0; j<subgoalS[i].length; j++) {
+                 				if (subgoalS[i][j] != 0) {
+                 					goal_coord = new int[] {i, j};
+                 					break outer1;
+                 				}
+                 			}
+                 		}
+                 		
+                 		System.err.println("GOALCORD: " + goal_coord);
+                 		
+                 		int[][] dist_grid = s.getdistance(goal_coord[0], goal_coord[1]);
+                 		
                  		s = new State(aRows, aCols, agentColor,
-                         		s.walls, aBoxes, boxColor, subgoalS);
+                         		s.walls, aBoxes, boxColor, subgoalS, dist_grid);
+                 		
                  	
 	                 	System.err.println("SUBGOAL");
 	                 	for (int i=0; i<subgoal.length; i++) {
@@ -169,7 +189,7 @@ public class GraphSearch {
 	                 	}
 	                 	
 	                 	else if (wastar) {
-	                 		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 2));
+	                 		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 0));
 	                 	}
 	                 	
 	                 	
@@ -251,7 +271,7 @@ public class GraphSearch {
             	 
             	 
             	 s = new State(initialState.agentRows, initialState.agentCols, initcoloragent,
-                 		initialState.walls, initialState.boxes, initcolorbox, initialState.goals);
+                 		initialState.walls, initialState.boxes, initcolorbox, initialState.goals, initialState.distancegrid);
             }
             System.err.println("DONE");
             

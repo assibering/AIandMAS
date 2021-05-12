@@ -25,8 +25,55 @@ public abstract class Heuristic
             }
         }
     }
+    
+    public int h_new(State s) {
+    	
+    	char goalchar = 0;
+    	
+    	outerloop1:
+    	for (int i=1; i<s.goals.length-1; i++) {
+    		for (int j=1; j<s.goals[i].length-1; j++) {
+    			if (s.goals[i][j] != 0) {
+    				goalchar = s.goals[i][j];
+    				break outerloop1;
+    			}
+    		}
+    	}
+    	
+    	if (goalchar >= 'A' && goalchar <= 'Z') {
+    		
+    		int row = 0;
+    		int col = 0;
+    		outerloop2:
+    		for (int i=1; i<s.boxes.length-1; i++) {
+        		for (int j=1; j<s.boxes[i].length-1; j++) {
+        			if (s.boxes[i][j] == goalchar) {
+        				row = i;
+        				col = j;
+        				break outerloop2;
+        			}
+        		}
+        	}
+    		
+    		return s.distancegrid[row][col];
+    		
+    	}
+    	else {
+    		
+    		int agentrow = s.agentRows[0];
+    		int agentcol = s.agentCols[0];
+    		
+    		return s.distancegrid[agentrow][agentcol];
+    		
+    	}
+    }
+    
+    
+    
 
     public int h(State s) {
+    	
+    	
         //NEW for multi-agent
         long[] agentDistancesForColours = new long[State.boxColors.length];
         long[] remainingGoalsPerColour = new long[State.boxColors.length];
@@ -219,7 +266,7 @@ class HeuristicGreedy
 
     @Override
     public int f(State s) {
-        return this.h(s);
+        return this.h_new(s);
     }
 
     @Override

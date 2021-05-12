@@ -45,6 +45,7 @@ public class State
     public final State parent;
     public final Action[] jointAction;
     private final int g;
+    public int[][] distancegrid;
 
     private int hash = 0;
 
@@ -52,7 +53,7 @@ public class State
     // Constructs an initial state.
     // Arguments are not copied, and therefore should not be modified after being passed in.
     public State(int[] agentRows, int[] agentCols, Color[] agentColors, boolean[][] walls,
-                 char[][] boxes, Color[] boxColors, char[][] goals
+                 char[][] boxes, Color[] boxColors, char[][] goals, int[][] distancegrid
     )
     {
         this.agentRows = agentRows;
@@ -65,6 +66,7 @@ public class State
         this.parent = null;
         this.jointAction = null;
         this.g = 0;
+        this.distancegrid = distancegrid;
     }
 
 
@@ -78,6 +80,7 @@ public class State
         this.boxes = new char[parent.boxes.length][];
         this.goals = parent.goals;
         this.walls = parent.walls;
+        this.distancegrid = parent.distancegrid;
         for (int i = 0; i < parent.boxes.length; i++)
         {
             this.boxes[i] = Arrays.copyOf(parent.boxes[i], parent.boxes[i].length);
@@ -271,6 +274,66 @@ public class State
     	subgoal_split.addLast(subgoal);
     	
     	return subgoal_split;
+    }
+    
+    public int[][] getdistance(int row_source, int col_source) {
+    	int[][] init_grid = new int[this.boxes.length][this.boxes[0].length];
+    	init_grid[row_source][col_source] = 1;
+    	LinkedList<int[]> queue = new LinkedList<int[]>();
+    	queue.add(new int[] {row_source, col_source});
+    	
+    	return distance(init_grid, queue);
+    }
+    
+    public int[][] distance(int[][] grid, LinkedList<int[]> queue) {
+    	if (queue.isEmpty()) {
+    		for (int i=0; i<grid.length; i++) {
+    			System.err.println(Arrays.toString(grid[i]));
+    		}
+    		return grid;
+    	}
+    	
+    	int[] element = queue.pollFirst();
+    	int i = element[0];
+    	int j = element[1];
+    	int dist = grid[i][j];
+    	
+    	//North
+    	if (!this.walls[i-1][j]) {
+    		if (grid[i-1][j] == 0) {
+    			grid[i-1][j] = dist + 1;
+    			queue.add(new int[]{i-1, j});
+    		}
+    	}
+    	
+    	//South
+    	if (!this.walls[i+1][j]) {
+    		if (grid[i+1][j] == 0) {
+    			grid[i+1][j] = dist + 1;
+    			queue.add(new int[]{i+1, j});
+    		}
+    	}
+    	
+    	//East
+    	if (!this.walls[i][j+1]) {
+    		if (grid[i][j+1] == 0) {
+    			grid[i][j+1] = dist + 1;
+    			queue.add(new int[]{i, j+1});
+    		}
+    	}
+    	
+    	//West
+    	if (!this.walls[i][j-1]) {
+    		if (grid[i][j-1] == 0) {
+    			grid[i][j-1] = dist + 1;
+    			queue.add(new int[]{i, j-1});
+    		}
+    	}
+    	
+    	System.err.println(queue);
+    	
+    	return distance(grid, queue);
+    	
     }
     
     
