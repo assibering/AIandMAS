@@ -1,15 +1,13 @@
 package searchclient;
 
-enum ActionType
-{
+enum ActionType {
     NoOp,
     Move,
     Push,
     Pull
 }
 
-public enum Action
-{
+public enum Action {
     /*
         List of possible actions. Each action has the following parameters, 
         taken in order from left to right:
@@ -47,21 +45,21 @@ public enum Action
     PushWS("Push(W,S)", ActionType.Push, 0, -1, 1, 0),
     PushWW("Push(W,W)", ActionType.Push, 0, -1, 0, -1),
 
-    PullNN("Pull(N,N)", ActionType.Pull, -1, 0,-1,0),
-    PullNE("Pull(N,E)", ActionType.Pull, -1, 0,0,1),
-    PullNW("Pull(N,W)", ActionType.Pull, -1, 0,0,-1),
+    PullNN("Pull(N,N)", ActionType.Pull, -1, 0, -1, 0),
+    PullNE("Pull(N,E)", ActionType.Pull, -1, 0, 0, 1),
+    PullNW("Pull(N,W)", ActionType.Pull, -1, 0, 0, -1),
 
-    PullSS("Pull(S,S)", ActionType.Pull, 1, 0,1,0),
-    PullSE("Pull(S,E)", ActionType.Pull, 1, 0,0,1),
-    PullSW("Pull(S,W)", ActionType.Pull, 1, 0,0,-1),
+    PullSS("Pull(S,S)", ActionType.Pull, 1, 0, 1, 0),
+    PullSE("Pull(S,E)", ActionType.Pull, 1, 0, 0, 1),
+    PullSW("Pull(S,W)", ActionType.Pull, 1, 0, 0, -1),
 
-    PullEN("Pull(E,N)", ActionType.Pull, 0, 1,-1,0),
-    PullES("Pull(E,S)", ActionType.Pull, 0, 1,1,0),
-    PullEE("Pull(E,E)", ActionType.Pull, 0, 1,0,1),
+    PullEN("Pull(E,N)", ActionType.Pull, 0, 1, -1, 0),
+    PullES("Pull(E,S)", ActionType.Pull, 0, 1, 1, 0),
+    PullEE("Pull(E,E)", ActionType.Pull, 0, 1, 0, 1),
 
-    PullWN("Pull(W,N)", ActionType.Pull, 0, -1,-1,0),
-    PullWS("Pull(W,S)", ActionType.Pull, 0, -1,1,0),
-    PullWW("Pull(W,W)", ActionType.Pull, 0, -1,0,-1);
+    PullWN("Pull(W,N)", ActionType.Pull, 0, -1, -1, 0),
+    PullWS("Pull(W,S)", ActionType.Pull, 0, -1, 1, 0),
+    PullWW("Pull(W,W)", ActionType.Pull, 0, -1, 0, -1);
 
     public final String name;
     public final ActionType type;
@@ -70,13 +68,77 @@ public enum Action
     public final int boxRowDelta; // vertical diplacement of box (-1,0,+1)
     public final int boxColDelta; // horisontal displacement of box (-1,0,+1)
 
-    Action(String name, ActionType type, int ard, int acd, int brd, int bcd)
-    {
+    Action(String name, ActionType type, int ard, int acd, int brd, int bcd) {
         this.name = name;
         this.type = type;
-        this.agentRowDelta = ard; 
-        this.agentColDelta = acd; 
-        this.boxRowDelta = brd; 
-        this.boxColDelta = bcd;  
+        this.agentRowDelta = ard;
+        this.agentColDelta = acd;
+        this.boxRowDelta = brd;
+        this.boxColDelta = bcd;
+    }
+
+    public Action opposite() {
+        switch (this) {
+            case NoOp:
+                return NoOp;
+            case MoveN:
+                return MoveS;
+            case MoveS:
+                return MoveN;
+            case MoveE:
+                return MoveW;
+            case MoveW:
+                return MoveE;
+            case PullEE:
+                return PushWW;
+            case PullEN:
+                return PushWS;
+            case PullES:
+                return PushWN;
+            case PullNE:
+                return PushSW;
+            case PullNN:
+                return PushSS;
+            case PullNW:
+                return PushSE;
+            case PullSE:
+                return PushNW;
+            case PullSS:
+                return PushNN;
+            case PullSW:
+                return PushNE;
+            case PullWN:
+                return PushES;
+            case PullWS:
+                return PushEN;
+            case PullWW:
+                return PushEE;
+            case PushWW:
+                return PullEE;
+            case PushWS:
+                return PullEN;
+            case PushWN:
+                return PullES;
+            case PushSW:
+                return PullNE;
+            case PushSS:
+                return PullNN;
+            case PushSE:
+                return PullNW;
+            case PushNW:
+                return PullSE;
+            case PushNN:
+                return PullSS;
+            case PushNE:
+                return PullSW;
+            case PushES:
+                return PullWN;
+            case PushEN:
+                return PullWS;
+            case PushEE:
+                return PullWW;
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 }
