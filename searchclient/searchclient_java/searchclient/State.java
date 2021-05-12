@@ -287,9 +287,6 @@ public class State
     
     public int[][] distance(int[][] grid, LinkedList<int[]> queue) {
     	if (queue.isEmpty()) {
-    		for (int i=0; i<grid.length; i++) {
-    			System.err.println(Arrays.toString(grid[i]));
-    		}
     		return grid;
     	}
     	
@@ -330,7 +327,6 @@ public class State
     		}
     	}
     	
-    	System.err.println(queue);
     	
     	return distance(grid, queue);
     	
