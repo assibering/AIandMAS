@@ -8,7 +8,7 @@ public abstract class Heuristic
     ArrayList<Coordinates> goalSet = new ArrayList<>();
 
     public Heuristic(State initialState) {
-    	
+
 //        for (int i = 0; i < initialState.goals.length; i++) {
 //            for (int j = 0; j < initialState.goals[0].length; j++) {
 //                if (initialState.goals[i][j] != 0) {
@@ -16,7 +16,7 @@ public abstract class Heuristic
 //                }
 //            }
 //        }
-        
+
         for (int i = 0; i < initialState.goals.length; i++) {
             for (int j = 0; j < initialState.goals[0].length; j++) {
                 if (initialState.goals[i][j] != 0) {
@@ -238,9 +238,15 @@ class HeuristicAStar
     }
 }
 
+class HeuristicAStarFactory implements HeuristicFactory {
+    public Heuristic makeHeuristic(State initialState) {
+        return new HeuristicAStar(initialState);
+    }
+}
+
 class HeuristicWeightedAStar
         extends Heuristic {
-    private int w;
+    private final int w;
 
     public HeuristicWeightedAStar(State initialState, int w) {
         super(initialState);
@@ -258,6 +264,18 @@ class HeuristicWeightedAStar
     }
 }
 
+class HeuristicWeighedAStarFactory implements HeuristicFactory {
+    int w;
+
+    public HeuristicWeighedAStarFactory(int w) {
+        this.w = w;
+    }
+
+    public Heuristic makeHeuristic(State initialState) {
+        return new HeuristicWeightedAStar(initialState, w);
+    }
+}
+
 class HeuristicGreedy
         extends Heuristic {
     public HeuristicGreedy(State initialState) {
@@ -272,6 +290,12 @@ class HeuristicGreedy
     @Override
     public String toString() {
         return "greedy evaluation";
+    }
+}
+
+class HeuristicGreedyFactory implements HeuristicFactory {
+    public Heuristic makeHeuristic(State initialState) {
+        return new HeuristicGreedy(initialState);
     }
 }
 
@@ -295,4 +319,8 @@ class Coordinates {
             return false;
         }
     }
+}
+
+interface HeuristicFactory {
+    public Heuristic makeHeuristic(State initialState);
 }

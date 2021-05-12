@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.Locale;
 
@@ -122,11 +121,10 @@ public class SearchClient
         return new State(agentRows, agentCols, agentColors, walls, boxes, boxColors, goals, new int[boxes.length][boxes[0].length]);
     }
 
-    public static Action[][] search(State initialState, Frontier frontier)
-    {
-        System.err.format("Starting %s.\n", frontier.getName());
+    public static Action[][] search(State initialState, HeuristicFactory factory) {
+        System.err.format("Starting best-first search with %s.\n", factory.getClass().getSimpleName());
 
-        return GraphSearch.search(initialState, frontier);
+        return GraphSearch.search(initialState, factory);
     }
 
     public static void main(String[] args)
@@ -146,56 +144,57 @@ public class SearchClient
         State initialState = SearchClient.parseLevel(serverMessages);
         
         // Select search strategy.
-        Frontier frontier;
+        HeuristicFactory factory;
         if (args.length > 0)
         {
-            switch (args[0].toLowerCase(Locale.ROOT))
-            {
+            switch (args[0].toLowerCase(Locale.ROOT)) {
                 case "-bfs":
-                    frontier = new FrontierBFS();
+                    factory = new HeuristicGreedyFactory();
+//                    frontier = new FrontierBFS();
                     break;
                 case "-dfs":
-                    frontier = new FrontierDFS();
+                    factory = new HeuristicGreedyFactory();
+//                    frontier = new FrontierDFS();
                     break;
                 case "-astar":
-                    frontier = new FrontierBestFirst(new HeuristicAStar(initialState));
+                    factory = new HeuristicAStarFactory();
+//                    frontier = new FrontierBestFirst(new HeuristicAStar(initialState));
                     break;
                 case "-wastar":
                     int w = 5;
-                    if (args.length > 1)
-                    {
-                        try
-                        {
+                    if (args.length > 1) {
+                        try {
                             w = Integer.parseUnsignedInt(args[1]);
-                        }
-                        catch (NumberFormatException e)
-                        {
+                        } catch (NumberFormatException e) {
                             System.err.println("Couldn't parse weight argument to -wastar as integer, using default.");
                         }
                     }
-                    frontier = new FrontierBestFirst(new HeuristicWeightedAStar(initialState, w));
+                    factory = new HeuristicWeighedAStarFactory(w);
+//                    frontier = new FrontierBestFirst(new HeuristicWeightedAStar(initialState, w));
                     break;
                 case "-greedy":
-                    frontier = new FrontierBestFirst(new HeuristicGreedy(initialState));
+                    factory = new HeuristicGreedyFactory();
+//                    frontier = new FrontierBestFirst(new HeuristicGreedy(initialState));
                     break;
                 default:
-                    frontier = new FrontierBFS();
-                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
-                                       "-greedy to set the search strategy.");
+                    factory = new HeuristicGreedyFactory();
+//                    frontier = new FrontierBFS();
+//                    System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or " +
+//                                       "-greedy to set the search strategy.");
             }
         }
-        else
-        {
-            frontier = new FrontierBFS();
-            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
-                               "set the search strategy.");
+        else {
+            factory = new HeuristicGreedyFactory();
+//            frontier = new FrontierBFS();
+//            System.err.println("Defaulting to BFS search. Use arguments -bfs, -dfs, -astar, -wastar, or -greedy to " +
+//                               "set the search strategy.");
         }
 
         // Search for a plan.
         Action[][] plan;
         try
         {
-            plan = SearchClient.search(initialState, frontier);
+            plan = SearchClient.search(initialState, factory);
         }
         catch (OutOfMemoryError ex)
         {
