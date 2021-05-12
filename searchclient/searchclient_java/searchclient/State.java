@@ -1,6 +1,10 @@
 package searchclient;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.Random;
 
 public class State {
     private static final Random RNG = new Random(1);
@@ -66,7 +70,7 @@ public class State {
 
     // Constructs the state resulting from applying jointAction in parent.
     // Precondition: Joint action must be applicable and non-conflicting in parent state.
-    State(State parent, Action[] jointAction) {
+    private State(State parent, Action[] jointAction) {
         // Copy parent
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
         this.agentCols = Arrays.copyOf(parent.agentCols, parent.agentCols.length);
@@ -124,33 +128,24 @@ public class State {
     }
 
     public int[] getSingleAgentRow(int agent) {
-        return new int[]{this.agentRows[agent]};
+        int[] single = new int[]{this.agentRows[agent]};
+        return single;
     }
 
     public int[] getSingleAgentCol(int agent) {
-        return new int[]{this.agentCols[agent]};
+        int[] single = new int[]{this.agentCols[agent]};
+        return single;
     }
 
-    public char[][] getSingleAgentBoxes(int agent, char[][] subgoal) {
+    public char[][] getSingleAgentBoxes(int agent) {
         char[][] boxes = new char[this.boxes.length][this.boxes[0].length];
-        char currentGoal = 0;
-        for (int row = 1; row < subgoal.length; row++) {
-            for (int col = 1; col < subgoal[row].length; col++) {
-                if (subgoal[row][col] != 0) {
-                    currentGoal = subgoal[row][col];
-                    break;
-                }
-            }
-            if (currentGoal != 0)
-                break;
-        }
 
         for (int row = 1; row < this.boxes.length; row++) {
             for (int col = 1; col < this.boxes[row].length; col++) {
 
                 char box = this.boxes[row][col];
-                if ('A' <= box && box <= 'Z' && box == currentGoal) {
-                    if (agentColors[agent].equals(boxColors[box - 'A'])) {
+                if ('A' <= box && box <= 'Z') {
+                    if (this.agentColors[agent].equals(boxColors[box - 'A'])) {
                         boxes[row][col] = box;
                     }
                 }
@@ -163,24 +158,24 @@ public class State {
 
     public LinkedList<char[][]> getAgentSubGoals(int agent) {
 
-        LinkedList<char[][]> subgoalsBox = new LinkedList<>();
-        LinkedList<char[][]> subgoalsBoxPrio = new LinkedList<>();
-        LinkedList<char[][]> result = new LinkedList<>();
+        LinkedList<char[][]> subgoalsBox = new LinkedList<char[][]>();
+        LinkedList<char[][]> subgoalsBoxPrio = new LinkedList<char[][]>();
 
-        for (int row = 0; row < this.goals.length; row++) {
-            for (int col = 0; col < this.goals[row].length; col++) {
+        for (int row = 1; row < this.goals.length - 1; row++) {
+            for (int col = 1; col < this.goals[row].length - 1; col++) {
+
                 char goal = this.goals[row][col];
 
                 if ('A' <= goal && goal <= 'Z') {
 
-                    if (agentColors[agent].equals(boxColors[goal - 65])) {
+                    if (this.agentColors[agent].equals(this.boxColors[goal - 65])) {
                         char[][] subgoal = new char[this.goals.length][this.goals[0].length];
                         subgoal[row][col] = goal;
 
                         if (prioritizeSubGoal(row, col)) {
-                            subgoalsBoxPrio.add(subgoal);
+                            subgoalsBoxPrio.addLast(subgoal);
                         } else {
-                            subgoalsBox.add(subgoal);
+                            subgoalsBox.addLast(subgoal);
                         }
                     }
 
@@ -188,16 +183,18 @@ public class State {
                     if (agent == Integer.parseInt(String.valueOf(goal))) {
                         char[][] subgoal = new char[this.goals.length][this.goals[0].length];
                         subgoal[row][col] = goal;
-                        subgoalsBox.add(subgoal);
+                        subgoalsBox.addLast(subgoal);
                     }
                 }
             }
         }
 
-        result.addAll(subgoalsBoxPrio);
-        result.addAll(subgoalsBox);
-        //    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
-//
+        for (char[][] priosubgoal : subgoalsBoxPrio) {
+            subgoalsBox.addFirst(priosubgoal);
+        }
+
+//    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
+//    	
 //    	for (char[][] subgoal : subgoalsBox) {
 //    		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
 //    		subgoal_split = splitSubgoal(subgoal, agent);
@@ -206,8 +203,9 @@ public class State {
 //    		}
 //    	}
 
-        return result;
+        return subgoalsBox;
     }
+
 
     public LinkedList<char[][]> splitSubgoal(char[][] subgoal, int agent) {
 <<<<<<< HEAD
@@ -231,6 +229,7 @@ public class State {
 
         outerloop1:
         for (int i = 1; i < subgoal.length - 1; i++) {
+<<<<<<< HEAD
 >>>>>>> 8d3694361ab4296ae401825b45e7673167486b44
     		for (int j=1; j<subgoal[i].length; j++) {
     			if (subgoal[i][j] != 0) {
@@ -251,6 +250,18 @@ public class State {
 >>>>>>> 8d3694361ab4296ae401825b45e7673167486b44
     	outerloop2:
     	for (int i=1; i<this.boxes.length-1; i++) {
+=======
+            for (int j = 1; j < subgoal[i].length; j++) {
+                if (subgoal[i][j] != 0) {
+                    subgoal_char = subgoal[i][j];
+                    break outerloop1;
+                }
+            }
+        }
+
+        outerloop2:
+        for (int i = 1; i < this.boxes.length - 1; i++) {
+>>>>>>> 1d577f91c2ae407909bb9bbcf98c53f127484d25
     		for (int j=1; j<this.boxes[i].length; j++) {
     			char boxchar = this.boxes[i][j];
     			if (boxchar == subgoal_char) {
@@ -268,7 +279,7 @@ public class State {
     					break outerloop2;
     				}
 
-    				if (!this.walls[i-1][j]) {
+                    if (!this.walls[i-1][j]) {
     					findBoxGoal[i-1][j] = agentchar;
     					break outerloop2;
     				} else if (!this.walls[i+1][j]) {
@@ -282,14 +293,14 @@ public class State {
     					break outerloop2;
     				}
 
-    			}
+                }
     		}
     	}
 
-    	subgoal_split.addFirst(findBoxGoal);
+        subgoal_split.addFirst(findBoxGoal);
     	subgoal_split.addLast(subgoal);
 
-    	return subgoal_split;
+        return subgoal_split;
     }
 
     public int[][] getdistance(int row_source, int col_source) {
@@ -298,7 +309,7 @@ public class State {
     	LinkedList<int[]> queue = new LinkedList<int[]>();
     	queue.add(new int[] {row_source, col_source});
 
-    	return distance(init_grid, queue);
+        return distance(init_grid, queue);
     }
 
     public int[][] distance(int[][] grid, LinkedList<int[]> queue) {
@@ -306,42 +317,42 @@ public class State {
     		return grid;
     	}
 
-    	int[] element = queue.pollFirst();
+        int[] element = queue.pollFirst();
     	int i = element[0];
     	int j = element[1];
     	int dist = grid[i][j];
 
-    	//North
+        //North
     	if (!this.walls[i-1][j]) {
     		if (grid[i-1][j] == 0) {
     			grid[i-1][j] = dist + 1;
     			queue.add(new int[]{i-1, j});
-    		}
-    	}
+            }
+        }
 
-    	//South
-    	if (!this.walls[i+1][j]) {
-    		if (grid[i+1][j] == 0) {
-    			grid[i+1][j] = dist + 1;
-    			queue.add(new int[]{i+1, j});
-    		}
-    	}
+        //South
+        if (!this.walls[i + 1][j]) {
+            if (grid[i + 1][j] == 0) {
+                grid[i + 1][j] = dist + 1;
+                queue.add(new int[]{i + 1, j});
+            }
+        }
 
         //East
-    	if (!this.walls[i][j+1]) {
-    		if (grid[i][j+1] == 0) {
-    			grid[i][j+1] = dist + 1;
-    			queue.add(new int[]{i, j+1});
-    		}
-    	}
+        if (!this.walls[i][j + 1]) {
+            if (grid[i][j + 1] == 0) {
+                grid[i][j + 1] = dist + 1;
+                queue.add(new int[]{i, j + 1});
+            }
+        }
 
         //West
-    	if (!this.walls[i][j-1]) {
-    		if (grid[i][j-1] == 0) {
-    			grid[i][j-1] = dist + 1;
-    			queue.add(new int[]{i, j-1});
-    		}
-    	}
+        if (!this.walls[i][j - 1]) {
+            if (grid[i][j - 1] == 0) {
+                grid[i][j - 1] = dist + 1;
+                queue.add(new int[]{i, j - 1});
+            }
+        }
 
 
         return distance(grid, queue);
@@ -442,7 +453,7 @@ public class State {
         return expandedStates;
     }
 
-    boolean isApplicable(int agent, Action action) {
+    private boolean isApplicable(int agent, Action action) {
         int agentRow = this.agentRows[agent];
         int agentCol = this.agentCols[agent];
         Color agentColor = this.agentColors[agent];
