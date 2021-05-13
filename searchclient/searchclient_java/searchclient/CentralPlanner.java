@@ -22,6 +22,8 @@ public class CentralPlanner {
 		for (int i = 0; i < this.individualplans.size(); i++) {
 			if (stepnumber < this.individualplans.get(i).length) {
 				jointAction[i] = this.individualplans.get(i)[stepnumber][0];
+			} else {
+				jointAction[i] = Action.NoOp;
 			}
 		}
 		return jointAction;
@@ -52,12 +54,14 @@ public class CentralPlanner {
 		}
 		// If there are actions to be made, we check them for applicability and conflict
 		for (int agent = 0; agent < initialState.agentRows.length; agent++) {
-			if (!initialState.isApplicable(agent, jointAction[agent])) {
+			ApplicabilityResult applicabilityResult = initialState.isApplicable(agent, jointAction[agent]);
+			if (!applicabilityResult.isApplicable()) {
 				System.err.printf("Found applicability issue with agent %d at step %d\n", agent, step);
 				PlanningResult result = new PlanningResult();
 				result.agent = agent;
 				result.step = step;
 				result.type = PlanningResult.PlanningResultType.WITH_CONFLICT;
+				result.cause = applicabilityResult.getCause();
 				return result;
 			}
 		}
@@ -69,6 +73,7 @@ public class CentralPlanner {
 			result.agent = conflictResult.agent1;
 			result.step = step;
 			result.type = PlanningResult.PlanningResultType.WITH_CONFLICT;
+			result.cause = (char) (conflictResult.agent2 + '0');
 			return result;
 		}
 
@@ -90,9 +95,9 @@ public class CentralPlanner {
 			ArrayList<Action[]> temporaryList = new ArrayList<>();
 			Collections.addAll(temporaryList, temporaryPlan);
 			// TODO how many NoOps should be added there - maybe difference between current step and error step?
-			for (int noOps = step; noOps < nextAction.step; noOps++) {
-				temporaryList.add(noOps, new Action[]{Action.NoOp});
-			}
+			//for (int noOps = step; noOps < nextAction.step; noOps++) {
+			temporaryList.add(step, new Action[]{Action.NoOp});
+			//}
 			temporaryPlan = temporaryList.toArray(new Action[0][]);
 			this.individualplans.set(nextAction.agent, temporaryPlan);
 			// TODO modify joint action to represent that
@@ -110,7 +115,7 @@ public class CentralPlanner {
 		// TODO: how to detect if this given conflict is fully resolved and we don't try to solve another one
 		if (resolveAttempt.type == PlanningResult.PlanningResultType.WITH_CONFLICT
 				&& resolveAttempt.agent == nextAction.agent
-			/*&& resolveAttempt.step <= nextAction.step*/) {
+				&& resolveAttempt.cause == nextAction.cause) {
 			// TODO revert to previous plan
 			this.individualplans.set(resolveAttempt.agent, originalPlan);
 			return resolveAttempt;

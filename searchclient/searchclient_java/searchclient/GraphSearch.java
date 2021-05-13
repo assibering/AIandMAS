@@ -266,12 +266,23 @@ public class GraphSearch {
 			}
 			System.err.println("DONE");
 
+			Action[][] plan = planner.getFullPlan();
+			System.err.println("Plan before resolution.");
+			for (Action[] step : plan) {
+				System.err.println(Arrays.toString(step));
+			}
+
 			PlanningResult planningResult = planner.plan(initialState, 0);
 			if (planningResult.type != PlanningResult.PlanningResultType.NO_CONFLICT) {
 				System.err.println("Could not find a solution.");
 			}
 
-			return planner.getFullPlan();
+			plan = planner.getFullPlan();
+			System.err.println("Plan after resolution.");
+			for (Action[] step : plan) {
+				System.err.println(Arrays.toString(step));
+			}
+			return plan;
 		}
     }
 

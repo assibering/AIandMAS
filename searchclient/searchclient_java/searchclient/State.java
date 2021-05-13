@@ -241,19 +241,19 @@ public class State
     		for (int j=1; j<this.boxes[i].length; j++) {
     			char boxchar = this.boxes[i][j];
     			if (boxchar == subgoal_char) {
-    				if (this.cellIsFree(i-1,j)) {
-    					findBoxGoal[i-1][j] = agentchar;
-    					break outerloop2;
-    				} else if (this.cellIsFree(i+1,j)) {
-    					findBoxGoal[i+1][j] = agentchar;
-    					break outerloop2;
-    				} else if (this.cellIsFree(i,j-1)) {
-    					findBoxGoal[i][j-1] = agentchar;
-    					break outerloop2;
-    				} else if (this.cellIsFree(i,j+1)) {
-    					findBoxGoal[i][j+1] = agentchar;
-    					break outerloop2;
-    				}
+                    if (this.cellIsFree(i - 1, j).isApplicable()) {
+                        findBoxGoal[i - 1][j] = agentchar;
+                        break outerloop2;
+                    } else if (this.cellIsFree(i + 1, j).isApplicable()) {
+                        findBoxGoal[i + 1][j] = agentchar;
+                        break outerloop2;
+                    } else if (this.cellIsFree(i, j - 1).isApplicable()) {
+                        findBoxGoal[i][j - 1] = agentchar;
+                        break outerloop2;
+                    } else if (this.cellIsFree(i, j + 1).isApplicable()) {
+                        findBoxGoal[i][j + 1] = agentchar;
+                        break outerloop2;
+                    }
     				
     				if (!this.walls[i-1][j]) {
     					findBoxGoal[i-1][j] = agentchar;
@@ -394,8 +394,7 @@ public class State
             ArrayList<Action> agentActions = new ArrayList<>(Action.values().length);
             for (Action action : Action.values())
             {
-                if (this.isApplicable(agent, action))
-                {
+                if (this.isApplicable(agent, action).isApplicable()) {
                     agentActions.add(action);
                 }
             }
@@ -451,7 +450,7 @@ public class State
         return expandedStates;
     }
 
-    boolean isApplicable(int agent, Action action) {
+    ApplicabilityResult isApplicable(int agent, Action action) {
         int agentRow = this.agentRows[agent];
         int agentCol = this.agentCols[agent];
         Color agentColor = this.agentColors[agent];
@@ -460,10 +459,11 @@ public class State
         char box;
         int destinationRow;
         int destinationCol;
+        ApplicabilityResult result;
         switch (action.type)
         {
             case NoOp:
-                return true;
+                return new ApplicabilityResult();
 
             case Move:
                 destinationRow = agentRow + action.agentRowDelta;
@@ -474,37 +474,42 @@ public class State
                 destinationRow = agentRow + action.agentRowDelta;
                 destinationCol = agentCol + action.agentColDelta;
                 box = this.boxes[destinationRow][destinationCol];
-                
+
                 if ('A' <= box && box <= 'Z') {
-                	if (agentColor.equals(boxColors[box - 65])) {
-                		boxRow = destinationRow + action.boxRowDelta;
+                    if (agentColor.equals(boxColors[box - 65])) {
+                        boxRow = destinationRow + action.boxRowDelta;
                         boxCol = destinationCol + action.boxColDelta;
                         return this.cellIsFree(boxRow, boxCol);
-                	}
-                 
+                    }
                 }
-                return false;
+                result = new ApplicabilityResult();
+                result.type = ApplicabilityResult.ApplicabilityType.CONDITIONS_NOT_MET;
+                return result;
 
             case Pull:
                 destinationRow = agentRow + action.agentRowDelta;
                 destinationCol = agentCol + action.agentColDelta;
-                
-                if (this.cellIsFree(destinationRow, destinationCol)) {
-                	boxRow = agentRow;
+
+                if (this.cellIsFree(destinationRow, destinationCol).isApplicable()) {
+                    boxRow = agentRow;
                     boxCol = agentCol;
-                	box = this.boxes[boxRow-action.boxRowDelta][boxCol-action.boxColDelta];
-                	if ('A' <= box && box <= 'Z') {
-                		if (agentColor.equals(boxColors[box - 65])) {
-                			return true;
-                		}
-                	}
+                    box = this.boxes[boxRow - action.boxRowDelta][boxCol - action.boxColDelta];
+                    if ('A' <= box && box <= 'Z') {
+                        if (agentColor.equals(boxColors[box - 65])) {
+                            return new ApplicabilityResult();
+                        }
+                    }
                 }
-                
-                return false;
+
+                result = new ApplicabilityResult();
+                result.type = ApplicabilityResult.ApplicabilityType.CONDITIONS_NOT_MET;
+                return result;
         }
 
         // Unreachable:
-        return false;
+        result = new ApplicabilityResult();
+        result.type = ApplicabilityResult.ApplicabilityType.CONDITIONS_NOT_MET;
+        return result;
     }
 
     ConflictResult isConflicting(Action[] jointAction) {
@@ -594,9 +599,24 @@ public class State
         return ConflictResult.noConflict();
     }
 
-    private boolean cellIsFree(int row, int col)
-    {
-        return !this.walls[row][col] && this.boxes[row][col] == 0 && this.agentAt(row, col) == 0;
+    private ApplicabilityResult cellIsFree(int row, int col) {
+        ApplicabilityResult result = new ApplicabilityResult();
+        if (this.walls[row][col]) {
+            result.type = ApplicabilityResult.ApplicabilityType.WALL;
+            return result;
+        }
+        if (this.boxes[row][col] != 0) {
+            result.type = ApplicabilityResult.ApplicabilityType.BOX;
+            result.box = this.boxes[row][col];
+            return result;
+        }
+        if (this.agentAt(row, col) != 0) {
+            result.type = ApplicabilityResult.ApplicabilityType.AGENT;
+            result.agent = this.agentAt(row, col);
+            return result;
+        }
+        result.type = ApplicabilityResult.ApplicabilityType.NO_ISSUE;
+        return result;
     }
 
     private char agentAt(int row, int col)
