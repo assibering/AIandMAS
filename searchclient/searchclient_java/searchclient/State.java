@@ -72,8 +72,7 @@ public class State
 
     // Constructs the state resulting from applying jointAction in parent.
     // Precondition: Joint action must be applicable and non-conflicting in parent state.
-    private State(State parent, Action[] jointAction)
-    {
+    State(State parent, Action[] jointAction) {
         // Copy parent
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
         this.agentCols = Arrays.copyOf(parent.agentCols, parent.agentCols.length);
@@ -81,8 +80,7 @@ public class State
         this.goals = parent.goals;
         this.walls = parent.walls;
         this.distancegrid = parent.distancegrid;
-        for (int i = 0; i < parent.boxes.length; i++)
-        {
+        for (int i = 0; i < parent.boxes.length; i++) {
             this.boxes[i] = Arrays.copyOf(parent.boxes[i], parent.boxes[i].length);
         }
 
@@ -417,9 +415,8 @@ public class State
             {
                 jointAction[agent] = applicableActions[agent][actionsPermutation[agent]];
             }
-            
-            if (!this.isConflicting(jointAction))
-            {
+
+            if (!this.isConflicting(jointAction).isConflict()) {
                 expandedStates.add(new State(this, jointAction));
             }
 
@@ -454,8 +451,7 @@ public class State
         return expandedStates;
     }
 
-    private boolean isApplicable(int agent, Action action)
-    {
+    boolean isApplicable(int agent, Action action) {
         int agentRow = this.agentRows[agent];
         int agentCol = this.agentCols[agent];
         Color agentColor = this.agentColors[agent];
@@ -511,8 +507,7 @@ public class State
         return false;
     }
 
-    private boolean isConflicting(Action[] jointAction)
-    {
+    ConflictResult isConflicting(Action[] jointAction) {
         int numAgents = this.agentRows.length;
 
         int[] destinationRows = new int[numAgents]; // row of new cell to become occupied by action
@@ -559,8 +554,6 @@ public class State
         }
         //DEFINE OCCUPIED POSITIONS
         
-        
-        
         for (int a1 = 0; a1 < numAgents; ++a1)
         {
             if (jointAction[a1] == Action.NoOp)
@@ -578,27 +571,27 @@ public class State
                 // Moving into same cell?
                 if (destinationRows[a1] == destinationRows[a2] && destinationCols[a1] == destinationCols[a2])
                 {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
 
                 if (boxRows[a1] == boxRows[a2] && boxCols[a1] == boxCols[a2])
                 {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
 
                 if (destinationRows[a1] == boxRows[a2]  && destinationCols[a1] == boxCols[a2])
                 {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
                 
                 if (destinationRows[a2] == boxRows[a1]  && destinationCols[a2] == boxCols[a1])
                 {
-                    return true;
+                    return ConflictResult.thereIsConflict(a1, a2);
                 }
             }
         }
 
-        return false;
+        return ConflictResult.noConflict();
     }
 
     private boolean cellIsFree(int row, int col)
