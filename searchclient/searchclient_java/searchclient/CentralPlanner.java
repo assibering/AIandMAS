@@ -43,8 +43,7 @@ public class CentralPlanner {
 		return result.toArray(new Action[0][]);
 	}
 
-	public PlanningResult delve(State initialState, int step) {
-		Action[] jointAction = getJointAction(step);
+	public PlanningResult test(State initialState, Action[] jointAction, int step) {
 		// If there are no actions to be made, we found the full plan
 		if (Arrays.stream(jointAction).allMatch(action -> action == Action.NoOp)) {
 			System.err.printf("Found full solution at step %d\n", step);
@@ -77,13 +76,28 @@ public class CentralPlanner {
 			return result;
 		}
 
+		return null;
+	}
+
+	public PlanningResult delve(State initialState, int step) {
+		Action[] jointAction = getJointAction(step);
+		PlanningResult result = test(initialState, jointAction, step);
+		if (result != null) {
+			return result;
+		}
 		return delve(new State(copyState(initialState), jointAction), step + 1);
 	}
 
+	//TODO: how to handle cases where you just need to wait rather than backtrack (like with 0?)
 	public PlanningResult plan(State initialState, int step) {
 		System.err.printf("Start planning at step %d\n", step);
-		//Issue search phase
-		PlanningResult nextAction = delve(initialState, step);
+		Action[] jointAction = getJointAction(step);
+		PlanningResult result = test(initialState, jointAction, step);
+		if (result != null) {
+			return result;
+		}
+		//If no issue now, plan ahead
+		PlanningResult nextAction = plan(new State(copyState(initialState), jointAction), step + 1);
 
 		// Issue resolution phase
 		// If we found some conflict, we try to check if delay works at this step
@@ -100,11 +114,11 @@ public class CentralPlanner {
 			Collections.addAll(temporaryList, temporaryPlan);
 			// TODO how many NoOps should be added there - maybe difference between current step and error step?
 			for (int noOps = step; noOps < nextAction.step; noOps++) {
-				temporaryList.add(noOps, new Action[]{Action.NoOp});
+				temporaryList.add(step, new Action[]{Action.NoOp});
 			}
 			temporaryPlan = temporaryList.toArray(new Action[0][]);
 			this.individualplans.set(nextAction.agent, temporaryPlan);
-			// TODO make a step with this delay
+			// TODO check if this works
 			resolveAttempt = delve(initialState, step);
 		}
 		// If there is no conflict, we propagate that back
@@ -119,7 +133,8 @@ public class CentralPlanner {
 				&& resolveAttempt.agent == nextAction.agent
 				&& resolveAttempt.cause == nextAction.cause) {
 			// TODO revert to previous plan
-			this.individualplans.set(resolveAttempt.agent, originalPlan);
+			if (step != 0)
+				this.individualplans.set(resolveAttempt.agent, originalPlan);
 			return resolveAttempt;
 		}
 		// If the conflict occurs not at all or with other agent, this means we delayed enough to avoid this problem
