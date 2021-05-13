@@ -3,7 +3,7 @@ package searchclient;
 public class ApplicabilityResult {
     ApplicabilityType type = ApplicabilityType.NO_ISSUE;
     char box;
-    int agent;
+    char agent;
 
     enum ApplicabilityType {NO_ISSUE, WALL, BOX, AGENT, CONDITIONS_NOT_MET}
 
@@ -18,7 +18,7 @@ public class ApplicabilityResult {
                 result = this.box;
                 break;
             case AGENT:
-                result = (char) (this.agent + '0');
+                result = this.agent;
                 break;
             default:
                 result = '\0';

@@ -16,7 +16,7 @@ public class State
     */
     public int[] agentRows;
     public int[] agentCols;
-    public static Color[] agentColors;
+    public Color[] agentColors;
 
     /*
         The walls, boxes, and goals arrays are indexed from the top-left of the level, row-major order (row, col).
@@ -40,7 +40,7 @@ public class State
         The box colors are indexed alphabetically. So this.boxColors[0] is the color of A boxes, 
         this.boxColor[1] is the color of B boxes, etc.
     */
-    public static Color[] boxColors;
+    public Color[] boxColors;
  
     public final State parent;
     public final Action[] jointAction;
@@ -76,6 +76,8 @@ public class State
         // Copy parent
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
         this.agentCols = Arrays.copyOf(parent.agentCols, parent.agentCols.length);
+        this.agentColors = Arrays.copyOf(parent.agentColors, parent.agentColors.length);
+        this.boxColors = Arrays.copyOf(parent.boxColors, parent.boxColors.length);
         this.boxes = new char[parent.boxes.length][];
         this.goals = parent.goals;
         this.walls = parent.walls;
@@ -150,10 +152,10 @@ public class State
     			
     			char box = this.boxes[row][col];
     			if ('A' <= box && box <= 'Z') {
-    				if (this.agentColors[agent].equals(boxColors[box - 'A'])) {
-    					boxes[row][col] = box;
-    				}
-    			}
+                    if (agentColors[agent].equals(boxColors[box - 'A'])) {
+                        boxes[row][col] = box;
+                    }
+                }
     			
     		}
     	}

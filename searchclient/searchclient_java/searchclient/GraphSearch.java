@@ -8,6 +8,8 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
 
+import static searchclient.CentralPlanner.copyState;
+
 //import javax.swing.Action;
 
 public class GraphSearch {
@@ -77,11 +79,7 @@ public class GraphSearch {
 			LinkedList<Action[][]> individualplans = new LinkedList<Action[][]>();
 
 
-			State s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
-					initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
-
-			searchclient.Color[] initcoloragent = s.agentColors;
-			searchclient.Color[] initcolorbox = s.boxColors;
+			State s = copyState(initialState);
 
 
 			int agents = s.agentRows.length;
@@ -261,8 +259,7 @@ public class GraphSearch {
 				individualplans.add(actions.toArray(new Action[0][0]));
 
 
-				s = new State(initialState.agentRows, initialState.agentCols, initcoloragent,
-						initialState.walls, initialState.boxes, initcolorbox, initialState.goals, initialState.distancegrid);
+				s = copyState(initialState);
 			}
 			System.err.println("DONE");
 

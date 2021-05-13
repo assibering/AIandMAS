@@ -43,9 +43,7 @@ public class CentralPlanner {
 		return result.toArray(new Action[0][]);
 	}
 
-	public PlanningResult plan(State initialState, int step) {
-		System.err.printf("Start planning at step %d\n", step);
-		//Issue search phase
+	public PlanningResult delve(State initialState, int step) {
 		Action[] jointAction = getJointAction(step);
 		// If there are no actions to be made, we found the full plan
 		if (Arrays.stream(jointAction).allMatch(action -> action == Action.NoOp)) {
@@ -56,7 +54,9 @@ public class CentralPlanner {
 		for (int agent = 0; agent < initialState.agentRows.length; agent++) {
 			ApplicabilityResult applicabilityResult = initialState.isApplicable(agent, jointAction[agent]);
 			if (!applicabilityResult.isApplicable()) {
-				System.err.printf("Found applicability issue with agent %d at step %d\n", agent, step);
+				System.err.printf("Found applicability issue with action %s by agent %d at step %d due to %s: %c\n",
+						jointAction[agent],
+						agent, step, applicabilityResult.type, applicabilityResult.getCause());
 				PlanningResult result = new PlanningResult();
 				result.agent = agent;
 				result.step = step;
@@ -77,13 +77,17 @@ public class CentralPlanner {
 			return result;
 		}
 
+		return delve(new State(copyState(initialState), jointAction), step + 1);
+	}
+
+	public PlanningResult plan(State initialState, int step) {
+		System.err.printf("Start planning at step %d\n", step);
+		//Issue search phase
+		PlanningResult nextAction = delve(initialState, step);
+
 		// Issue resolution phase
-		// This means our action is now applicable and not conflicting
-		// We make next step
-		PlanningResult nextAction = plan(new State(copyState(initialState), jointAction), step + 1);
+		// If we found some conflict, we try to check if delay works at this step
 		PlanningResult resolveAttempt;
-		// If we found some conflict
-		// We try to check if delay works at this step
 		Action[][] temporaryPlan;
 		Action[][] originalPlan;
 		if (nextAction.type == PlanningResult.PlanningResultType.WITH_CONFLICT) {
@@ -95,15 +99,13 @@ public class CentralPlanner {
 			ArrayList<Action[]> temporaryList = new ArrayList<>();
 			Collections.addAll(temporaryList, temporaryPlan);
 			// TODO how many NoOps should be added there - maybe difference between current step and error step?
-			//for (int noOps = step; noOps < nextAction.step; noOps++) {
-			temporaryList.add(step, new Action[]{Action.NoOp});
-			//}
+			for (int noOps = step; noOps < nextAction.step; noOps++) {
+				temporaryList.add(noOps, new Action[]{Action.NoOp});
+			}
 			temporaryPlan = temporaryList.toArray(new Action[0][]);
 			this.individualplans.set(nextAction.agent, temporaryPlan);
-			// TODO modify joint action to represent that
-			jointAction = getJointAction(step);
 			// TODO make a step with this delay
-			resolveAttempt = plan(new State(copyState(initialState), jointAction), step + 1);
+			resolveAttempt = delve(initialState, step);
 		}
 		// If there is no conflict, we propagate that back
 		else {
@@ -123,12 +125,11 @@ public class CentralPlanner {
 		// If the conflict occurs not at all or with other agent, this means we delayed enough to avoid this problem
 		// And we just call next step on this action
 		else {
-			jointAction = getJointAction(step);
-			return plan(new State(copyState(initialState), jointAction), step + 1);
+			return plan(new State(copyState(initialState), getJointAction(step)), step + 1);
 		}
 	}
 
-	private static State copyState(State initialState) {
+	static State copyState(State initialState) {
 		char[][] initialStateBoxes = new char[initialState.boxes.length][];
 		for (int boxRow = 0; boxRow < initialStateBoxes.length; boxRow++) {
 			initialStateBoxes[boxRow] =
@@ -151,10 +152,10 @@ public class CentralPlanner {
 		}
 		return new State(Arrays.copyOf(initialState.agentRows, initialState.agentRows.length),
 				Arrays.copyOf(initialState.agentCols, initialState.agentCols.length),
-				State.agentColors,
+				Arrays.copyOf(initialState.agentColors, initialState.agentColors.length),
 				initialStateWalls,
 				initialStateBoxes,
-				State.boxColors,
+				Arrays.copyOf(initialState.boxColors, initialState.boxColors.length),
 				initialStateGoals,
 				initialStateDistances
 		);

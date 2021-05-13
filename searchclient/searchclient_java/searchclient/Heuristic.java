@@ -72,14 +72,14 @@ public abstract class Heuristic
     
 
     public int h(State s) {
-    	
-    	
+
+
         //NEW for multi-agent
-        long[] agentDistancesForColours = new long[State.boxColors.length];
-        long[] remainingGoalsPerColour = new long[State.boxColors.length];
-        long[] remainingAgentGoalsPerColour = new long[State.boxColors.length];
-        long[] manhattanDistancesPerColour = new long[State.boxColors.length];
-        long[] wallsInManhattanDistancesPerColour = new long[State.boxColors.length];
+        long[] agentDistancesForColours = new long[s.boxColors.length];
+        long[] remainingGoalsPerColour = new long[s.boxColors.length];
+        long[] remainingAgentGoalsPerColour = new long[s.boxColors.length];
+        long[] manhattanDistancesPerColour = new long[s.boxColors.length];
+        long[] wallsInManhattanDistancesPerColour = new long[s.boxColors.length];
         Arrays.fill(agentDistancesForColours, Long.MAX_VALUE);
 
         List<Coordinates> remainingGoals = goalSet.stream()
@@ -163,7 +163,7 @@ public abstract class Heuristic
                         wallsInManhattanDistancesPerColour[goalCoords.character - 'A'] += 4 * Math.min(wallsInManhattanDistances1, wallsInManhattanDistances2);
                         //Look for any matching agent per box
                         for (int agent = 0; agent < s.agentCols.length; agent++) {
-                            if (State.agentColors[agent] == State.boxColors[goalOpt.get().character - 'A']) {
+                            if (s.agentColors[agent] == s.boxColors[goalOpt.get().character - 'A']) {
                                 long distance = Math.abs(boxX - s.agentRows[agent]) + Math.abs(boxY - s.agentCols[agent]);
                                 //Add walls in between
                                 wallsInManhattanDistances1 = 0;
