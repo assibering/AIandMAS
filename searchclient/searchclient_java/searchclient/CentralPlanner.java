@@ -122,38 +122,12 @@ public class CentralPlanner {
 					originalPlan.length);
 			ArrayList<Action[]> temporaryList = new ArrayList<>();
 			Collections.addAll(temporaryList, temporaryPlan);
-			// When box, we wait one step until the issue goes away
-			// TODO: fix the wait issue when an agent blocks another agent from moving the blocking box
-			if (nextAction.cause >= 'A' && nextAction.cause <= 'Z') {
-				System.err.printf("Adding 1 NoOp due to box\n");
+			// TODO how many NoOps should be added there - maybe difference between current step and error step?
+			for (int noOps = step; noOps < nextAction.step; noOps++) {
 				temporaryList.add(step, new Action[]{Action.NoOp});
-			} else if (nextAction.cause >= '0' && nextAction.cause <= '9'
-					&& getJointAction(nextAction.step)[nextAction.cause - '0'] == Action.NoOp) {
-				//TODO remove NoOps from waiting agent
-				agentToBlame = nextAction.cause - '0';
-				originalPlan = Arrays.copyOf(this.individualplans.get(agentToBlame),
-						this.individualplans.get(agentToBlame).length);
-				temporaryPlan = Arrays.copyOf(originalPlan,
-						originalPlan.length);
-				temporaryList = new ArrayList<>();
-				Collections.addAll(temporaryList, temporaryPlan);
-				System.err.printf("Removing %d NoOps\n", nextAction.step - step);
-				for (int noOps = step; noOps < nextAction.step; noOps++) {
-					if (temporaryList.get(noOps)[0] == Action.NoOp) {
-						temporaryList.remove(noOps);
-					}
-				}
-			}
-			// When agent, we delay our actions by number of steps until issue happens
-			// Since this is recursive, we apply this from 1 NoOp, 2 NoOps
-			else {
-				System.err.printf("Adding %d NoOps\n", nextAction.step - step);
-				for (int noOps = step; noOps < nextAction.step; noOps++) {
-					temporaryList.add(noOps, new Action[]{Action.NoOp});
-				}
 			}
 			temporaryPlan = temporaryList.toArray(new Action[0][]);
-			this.individualplans.set(nextAction.agent, temporaryPlan);
+			this.individualplans.set(agentToBlame, temporaryPlan);
 			// TODO check if this works
 			resolveAttempt = delve(initialState, step);
 		}
