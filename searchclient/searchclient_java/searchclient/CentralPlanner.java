@@ -1,6 +1,7 @@
 package searchclient;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class CentralPlanner {
 
@@ -112,9 +113,16 @@ public class CentralPlanner {
 					originalPlan.length);
 			ArrayList<Action[]> temporaryList = new ArrayList<>();
 			Collections.addAll(temporaryList, temporaryPlan);
-			// TODO how many NoOps should be added there - maybe difference between current step and error step?
-			for (int noOps = step; noOps < nextAction.step; noOps++) {
+			// When box, we wait one step and progress further
+			if (nextAction.cause >= 'A' && nextAction.cause <= 'Z') {
 				temporaryList.add(step, new Action[]{Action.NoOp});
+			}
+			// When agent, we wait from this point until conflict happens
+			else {
+				// TODO how many NoOps should be added there - maybe difference between current step and error step?
+				for (int noOps = step; noOps < nextAction.step; noOps++) {
+					temporaryList.add(noOps, new Action[]{Action.NoOp});
+				}
 			}
 			temporaryPlan = temporaryList.toArray(new Action[0][]);
 			this.individualplans.set(nextAction.agent, temporaryPlan);
@@ -126,18 +134,20 @@ public class CentralPlanner {
 			System.err.printf("Found full solution at step %d\n", step);
 			return nextAction;
 		}
-		// If the conflict occurs at the same point or before, this means we need to revert further
+		// If the same conflict occurs, we need to add more
 		// We return who is conflicting and revert changes
 		// TODO: how to detect if this given conflict is fully resolved and we don't try to solve another one
 		if (resolveAttempt.type == PlanningResult.PlanningResultType.WITH_CONFLICT
-				&& resolveAttempt.agent == nextAction.agent
-				&& resolveAttempt.cause == nextAction.cause) {
+				&& resolveAttempt.step == step ||
+				(resolveAttempt.agent == nextAction.agent
+						&& resolveAttempt.cause == nextAction.cause
+						&& !(resolveAttempt.cause >= 'A' && resolveAttempt.cause <= 'Z'))) {
 			// TODO revert to previous plan
-			if (step != 0)
-				this.individualplans.set(resolveAttempt.agent, originalPlan);
+			this.individualplans.set(nextAction.agent, originalPlan);
 			return resolveAttempt;
 		}
-		// If the conflict occurs not at all or with other agent, this means we delayed enough to avoid this problem
+		// If the conflict occurs not at all or with other agent or it's still a box
+		// this means we delayed enough to avoid this problem
 		// And we just call next step on this action
 		else {
 			return plan(new State(copyState(initialState), getJointAction(step)), step + 1);
