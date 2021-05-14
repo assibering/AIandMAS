@@ -92,34 +92,62 @@ public class CentralPlanner {
 	//TODO: how to handle cases where you just need to wait rather than backtrack (like with 0?)
 	public PlanningResult plan(State initialState, int step) {
 		System.err.printf("Start planning at step %d\n", step);
+		//Can we make a step now?
 		Action[] jointAction = getJointAction(step);
 		PlanningResult result = test(initialState, jointAction, step);
+		//If not (or we NoOp), then return
 		if (result != null) {
 			return result;
 		}
-		//If no issue now, plan ahead
+		//If no issue now, then go to next step
 		PlanningResult nextAction = plan(new State(copyState(initialState), jointAction), step + 1);
 
 		// Issue resolution phase
-		// If we found some conflict, we try to check if delay works at this step
 		PlanningResult resolveAttempt;
 		Action[][] temporaryPlan;
 		Action[][] originalPlan;
-		if (nextAction.type == PlanningResult.PlanningResultType.WITH_CONFLICT) {
-			// TODO create temporary list of actions for delaying
-			originalPlan = Arrays.copyOf(this.individualplans.get(nextAction.agent),
-					this.individualplans.get(nextAction.agent).length);
+		int agentToBlame;
+		// If there is no conflict, we propagate that back
+		if (nextAction.type == PlanningResult.PlanningResultType.NO_CONFLICT) {
+			System.err.printf("Found full solution at step %d\n", step);
+			return nextAction;
+		}
+		// If we found some conflict, we try to check if delay works at this step
+		else {
+			agentToBlame = nextAction.agent;
+			// Create temporary list of actions for delaying
+			originalPlan = Arrays.copyOf(this.individualplans.get(agentToBlame),
+					this.individualplans.get(agentToBlame).length);
 			temporaryPlan = Arrays.copyOf(originalPlan,
 					originalPlan.length);
 			ArrayList<Action[]> temporaryList = new ArrayList<>();
 			Collections.addAll(temporaryList, temporaryPlan);
-			// When box, we wait one step and progress further
+			// When box, we wait one step until the issue goes away
+			// TODO: fix the wait issue when an agent blocks another agent from moving the blocking box
 			if (nextAction.cause >= 'A' && nextAction.cause <= 'Z') {
+				System.err.printf("Adding 1 NoOp due to box\n");
 				temporaryList.add(step, new Action[]{Action.NoOp});
+			} else if (nextAction.cause >= '0' && nextAction.cause <= '9'
+					&& getJointAction(nextAction.step)[nextAction.cause - '0'] == Action.NoOp) {
+				//TODO remove NoOps from waiting agent
+				agentToBlame = nextAction.cause - '0';
+				originalPlan = Arrays.copyOf(this.individualplans.get(agentToBlame),
+						this.individualplans.get(agentToBlame).length);
+				temporaryPlan = Arrays.copyOf(originalPlan,
+						originalPlan.length);
+				temporaryList = new ArrayList<>();
+				Collections.addAll(temporaryList, temporaryPlan);
+				System.err.printf("Removing %d NoOps\n", nextAction.step - step);
+				for (int noOps = step; noOps < nextAction.step; noOps++) {
+					if (temporaryList.get(noOps)[0] == Action.NoOp) {
+						temporaryList.remove(noOps);
+					}
+				}
 			}
-			// When agent, we wait from this point until conflict happens
+			// When agent, we delay our actions by number of steps until issue happens
+			// Since this is recursive, we apply this from 1 NoOp, 2 NoOps
 			else {
-				// TODO how many NoOps should be added there - maybe difference between current step and error step?
+				System.err.printf("Adding %d NoOps\n", nextAction.step - step);
 				for (int noOps = step; noOps < nextAction.step; noOps++) {
 					temporaryList.add(noOps, new Action[]{Action.NoOp});
 				}
@@ -129,21 +157,15 @@ public class CentralPlanner {
 			// TODO check if this works
 			resolveAttempt = delve(initialState, step);
 		}
-		// If there is no conflict, we propagate that back
-		else {
-			System.err.printf("Found full solution at step %d\n", step);
-			return nextAction;
-		}
+
 		// If the same conflict occurs, we need to add more
 		// We return who is conflicting and revert changes
 		// TODO: how to detect if this given conflict is fully resolved and we don't try to solve another one
 		if (resolveAttempt.type == PlanningResult.PlanningResultType.WITH_CONFLICT
-				&& resolveAttempt.step == step ||
-				(resolveAttempt.agent == nextAction.agent
-						&& resolveAttempt.cause == nextAction.cause
-						&& !(resolveAttempt.cause >= 'A' && resolveAttempt.cause <= 'Z'))) {
+				&& resolveAttempt.agent == nextAction.agent
+				&& resolveAttempt.cause == nextAction.cause) {
 			// TODO revert to previous plan
-			this.individualplans.set(nextAction.agent, originalPlan);
+			this.individualplans.set(agentToBlame, originalPlan);
 			return resolveAttempt;
 		}
 		// If the conflict occurs not at all or with other agent or it's still a box
