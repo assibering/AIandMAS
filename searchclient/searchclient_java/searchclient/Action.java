@@ -70,13 +70,77 @@ public enum Action
     public final int boxRowDelta; // vertical diplacement of box (-1,0,+1)
     public final int boxColDelta; // horisontal displacement of box (-1,0,+1)
 
-    Action(String name, ActionType type, int ard, int acd, int brd, int bcd)
-    {
+    Action(String name, ActionType type, int ard, int acd, int brd, int bcd) {
         this.name = name;
         this.type = type;
-        this.agentRowDelta = ard; 
-        this.agentColDelta = acd; 
-        this.boxRowDelta = brd; 
-        this.boxColDelta = bcd;  
+        this.agentRowDelta = ard;
+        this.agentColDelta = acd;
+        this.boxRowDelta = brd;
+        this.boxColDelta = bcd;
+    }
+
+    public Action opposite() {
+        switch (this) {
+            case NoOp:
+                return NoOp;
+            case MoveN:
+                return MoveS;
+            case MoveS:
+                return MoveN;
+            case MoveE:
+                return MoveW;
+            case MoveW:
+                return MoveE;
+            case PullEE:
+                return PushWW;
+            case PullEN:
+                return PushWS;
+            case PullES:
+                return PushWN;
+            case PullNE:
+                return PushSW;
+            case PullNN:
+                return PushSS;
+            case PullNW:
+                return PushSE;
+            case PullSE:
+                return PushNW;
+            case PullSS:
+                return PushNN;
+            case PullSW:
+                return PushNE;
+            case PullWN:
+                return PushES;
+            case PullWS:
+                return PushEN;
+            case PullWW:
+                return PushEE;
+            case PushWW:
+                return PullEE;
+            case PushWS:
+                return PullEN;
+            case PushWN:
+                return PullES;
+            case PushSW:
+                return PullNE;
+            case PushSS:
+                return PullNN;
+            case PushSE:
+                return PullNW;
+            case PushNW:
+                return PullSE;
+            case PushNN:
+                return PullSS;
+            case PushNE:
+                return PullSW;
+            case PushES:
+                return PullWN;
+            case PushEN:
+                return PullWS;
+            case PushEE:
+                return PullWW;
+            default:
+                throw new IllegalArgumentException();
+        }
     }
 }
