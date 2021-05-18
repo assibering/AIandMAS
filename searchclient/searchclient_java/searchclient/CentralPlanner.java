@@ -1,29 +1,31 @@
 package searchclient;
 
 import java.security.InvalidParameterException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
+import java.util.*;
 
 public class CentralPlanner {
 
-    public LinkedList<Action[][]> individualplans;
+    public List<Action[][]> individualplans;
     public State initialState;
+    public int latestAddedPlan = -1;
 
     public CentralPlanner(State initialState) {
         this.individualplans = new LinkedList<Action[][]>();
+        for (int i = 0; i < initialState.agentRows.length; i++) {
+            this.individualplans.add(new Action[0][0]);
+        }
         this.initialState = initialState;
     }
 
-    public void addPlan(Action[][] plan) {
-        this.individualplans.addLast(plan);
+    public void addPlan(int index, Action[][] plan) {
+        this.individualplans.set(index, plan);
+        this.latestAddedPlan = index;
         System.err.println("PLANS: " + this.individualplans.size());
     }
 
     public Action[] getJointAction(int stepnumber) {
-        Action[] jointAction = new Action[this.individualplans.size()];
-        for (int i = 0; i < this.individualplans.size(); i++) {
+        Action[] jointAction = new Action[this.initialState.agentRows.length];
+        for (int i = 0; i < this.initialState.agentRows.length; i++) {
             if (stepnumber < this.individualplans.get(i).length) {
                 jointAction[i] = this.individualplans.get(i)[stepnumber][0];
             } else {

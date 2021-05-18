@@ -3,10 +3,9 @@ package searchclient;
 //import java.awt.Desktop.Action;
 //import java.awt.Color;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.LinkedList;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static searchclient.CentralPlanner.copyState;
 
@@ -35,11 +34,11 @@ public class GraphSearch {
             //state.extractPlan() - Returns the Array of actions used to reach this state.
             //state.getExpandedStates() - Returns an ArrayList<State> containing the states reachable from the current state.
             //You should also take a look at Frontier.java to see which methods the Frontier interface exposes
-            //
-            //printSearchStates(explored, frontier): As you can see below, the code will print out status 
-            //(#explored states, size of the frontier, #generated states, total time used) for every 10000th node generated.
-            //You might also find it helpful to print out these stats when a solution has been found, so you can keep 
-            //track of the exact total number of states generated.
+			//
+			//printSearchStates(explored, frontier): As you can see below, the code will print out status
+			//(#explored states, size of the frontier, #generated states, total time used) for every 10000th node generated.
+			//You might also find it helpful to print out these stats when a solution has been found, so you can keep
+			//track of the exact total number of states generated.
 
 
             int iterations = 0;
@@ -78,9 +77,7 @@ public class GraphSearch {
 
 			LinkedList<Action[][]> individualplans = new LinkedList<Action[][]>();
 
-
 			State s = copyState(initialState);
-
 
 			int agents = s.agentRows.length;
 
@@ -184,7 +181,6 @@ public class GraphSearch {
 							frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 0));
 						}
 
-
 						frontier.add(s);
 						HashSet<State> explored = new HashSet<>();
 
@@ -254,7 +250,7 @@ public class GraphSearch {
 					}
 				}
 
-				planner.addPlan(actions.toArray(new Action[0][0]));
+				//planner.addPlan(actions.toArray(new Action[0][0]));
 
 				individualplans.add(actions.toArray(new Action[0][0]));
 
@@ -268,10 +264,12 @@ public class GraphSearch {
 			for (Action[] step : plan) {
 				System.err.println(Arrays.toString(step));
 			}
-
-			PlanningResult planningResult = planner.plan(initialState, 0);
-			if (planningResult.type != PlanningResult.PlanningResultType.NO_CONFLICT) {
-				System.err.println("Could not find a solution.");
+			for (int i = 0; i < individualplans.size(); i++) {
+				planner.addPlan(i, individualplans.get(i));
+				PlanningResult planningResult = planner.plan(initialState, 0);
+				if (planningResult.type != PlanningResult.PlanningResultType.NO_CONFLICT) {
+					System.err.println("Could not find a solution.");
+				}
 			}
 
 			plan = planner.getFullPlan();
