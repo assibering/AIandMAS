@@ -1,13 +1,12 @@
 package searchclient;
 
-//import java.awt.Desktop.Action;
-//import java.awt.Color;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
-
-//import javax.swing.Action;
+//import java.awt.Desktop.Action;
+//import java.awt.Desktop.Action;
+import java.util.*;
 
 public class GraphSearch {
 
@@ -43,9 +42,6 @@ public class GraphSearch {
             int iterations = 0;
             
             
-//            System.err.println("GOALSTATE: " + Arrays.deepToString(initialState.goals));
-            
-            System.err.println(frontier.getName().contains("greedy"));
             boolean greedy = false;
             boolean wastar = false;
             boolean astar = false;
@@ -63,7 +59,6 @@ public class GraphSearch {
             }
             
             LinkedList<char[][]> subgoals = new LinkedList<char[][]>();
-            
             LinkedList<char[][]>[] MAsubgoals = new LinkedList[initialState.agentRows.length];
             
             for (int agent=0; agent<initialState.agentRows.length; agent++) {
@@ -71,31 +66,52 @@ public class GraphSearch {
             	MAsubgoals[agent] = subgoals;
             }
             
-            LinkedList<Action[]> actions = new LinkedList<Action[]>();
+            //Lists to store individual plans, and order to execute plans.
+            LinkedList<Integer> subgoal_actions_order = new LinkedList<Integer>();
+            LinkedList<Action[][]>[] all_plans = new LinkedList[initialState.agentRows.length];
+            for (int i=0; i<all_plans.length; i++) {
+            	all_plans[i] = new LinkedList<Action[][]>();
+            }
             
-            
-            LinkedList<Action[][]> individualplans = new LinkedList<Action[][]>();
-            
-            
-            
+            //Maintaining State
             State s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
+            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
+            
+            //State from an agent's perspective
+            State agent_s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
             		initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
             
             searchclient.Color[] initcoloragent =  s.agentColors;
             searchclient.Color[] initcolorbox =  s.boxColors;
             
             
-            int agents = s.agentRows.length;
-            
             CentralPlanner planner = new CentralPlanner(s);
             
+            
+            //Integers to store
+            int agents = s.agentRows.length;
+            int subgoal_total = 0;
+            for (int i=0; i<MAsubgoals.length; i++) {
+            	subgoal_total += MAsubgoals[i].size();
+            }
+            int subgoal_count = 0;
+            int sequence_solution_length = 0;
+            int unreachable_count = 0;
+            
+            outerwhile:
+            while (subgoal_count < subgoal_total) {
+            
             for (int agent=0; agent<agents; agent++) {
+            	
+            	s.agentColors = initcoloragent;
+            	s.boxColors = initcolorbox;
             	
             	subgoals = MAsubgoals[agent];
             
             	int[] aRows = s.getSingleAgentRow(agent);
             	int[] aCols = s.getSingleAgentCol(agent);
             	char[][] aBoxes = s.getSingleAgentBoxes(agent);
+            	boolean[][] aWalls = s.otherEntities(agent);
             	
             	
             	searchclient.Color currentColor = initialState.agentColors[agent];
@@ -109,92 +125,146 @@ public class GraphSearch {
             		}
             	}
             	
-            	System.err.println(Arrays.toString(boxColor));
-            	System.err.println(Arrays.toString(agentColor));
-            	System.err.println(Arrays.toString(s.boxColors));
-            	System.err.println(Arrays.toString(s.agentColors));
+            	int agentsubgoal_count = -1;
             	
-//            	char[][] aBoxes = initialState.boxes;
-            	
-            	actions = new LinkedList<Action[]>(); 
-            	
-            	 for (char[][] subgoal : subgoals) {
-            		 
+            	outersubgoalloop:
+            	for (char[][] subgoal : subgoals) {
+            		agentsubgoal_count += 1;
             		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
-            		 
-            		System.err.println("NEW STATE - NEW SUBGOAL");
             		
-//            		if (!first_subgoal) {
-//            			for (int i=0; i<subgoal.length; i++) {
-//                			for (int j=0; j<subgoal[i].length; j++) {
-//                				subgoal[i][j] += s.goals[i][j];
-//                			}
-//                		}
-//            		}
-            		
-                 	s = new State(aRows, aCols, agentColor,
-                 		s.walls, aBoxes, boxColor, subgoal, s.distancegrid);
+            	
+                 	agent_s = new State(aRows, aCols, agentColor,
+                 		aWalls, aBoxes, boxColor, subgoal, s.distancegrid);
+                 
+                 	//Check if subgoal is reachable
+                 	char goalchar = 0;
+                 	int[] dst1 = new int[] {1,1};
+                 	outer01:
+                 	for (int i=1; i<subgoal.length-1; i++) {
+                 		for (int j=1; j<subgoal[i].length-1; j++) {
+                 			goalchar = subgoal[i][j];
+                 			if ('A' <= goalchar && goalchar <= 'Z') {
+                 				dst1 = new int[] {i,j};
+                 				break outer01;
+                 			}
+                 		}
+                 	}
+                 	
+                 	int[] dst2 = new int[] {aRows[0], aCols[0]};
+                 	
+                 	//Get source coordinate
+                 	char boxchar = 0;
+                 	int[] src = new int[] {1,1};
+                 	outer02:
+                 	for (int i=1; i<aBoxes.length-1; i++) {
+                 		for (int j=1; j<aBoxes[i].length-1; j++) {
+                 			boxchar = aBoxes[i][j];
+                 			if (boxchar == goalchar) {
+                 				src = new int[] {i,j};
+                 				break outer02;
+                 			}
+                 		}
+                 	}
+                 	
+                 	System.err.println("CURRENT LEVEL: ");
+                 	char[][] currentlevel = new char[s.boxes.length][s.boxes[0].length];
+                 	
+                 	for (int i=0; i<currentlevel.length; i++) {
+                 		for (int j=0; j<currentlevel[i].length; j++) {
+                 			currentlevel[i][j] = ' ';
+                 		}
+                 	}
                  	
                  	
+                 	for (int i=0; i<s.agentRows.length; i++) {
+                 		char b = (char)(i+'0');
+                 		currentlevel[s.agentRows[i]][s.agentCols[i]] = b;
+                 	}
                  	
-                 	subgoal_split = s.splitSubgoal(s.goals, agent);
+                 	for (int i=0; i<s.boxes.length; i++) {
+                 		for (int j=0; j<s.boxes[i].length; j++) {
+                 			char box = s.boxes[i][j];
+                  			if ('A' <= box && box <= 'Z') {
+                  				currentlevel[i][j] = box;
+                  			}
+                 		}
+             		}
                  	
+                 	for (int i=0; i<s.walls.length; i++) {
+                 		for (int j=0; j<s.walls[i].length; j++) {
+                 			if (s.walls[i][j]) {
+                 				currentlevel[i][j] = 'W';
+                 			}
+                 		}
+             		}
+                 	
+                 	for (int i=0; i<currentlevel.length; i++) {
+             			System.err.println(Arrays.toString(currentlevel[i]));
+             		}
+                 	
+                 	
+                 	//Check if dst1 and dst2 can be reached from source
+                 	boolean reachable = false;
+                 	int[][] reachables = agent_s.getdistance(src[0], src[1]);
+                 	if (reachables[dst1[0]][dst1[1]] != 0) {
+                 		if (reachables[dst2[0]][dst2[1]] != 0) {
+                 			reachable = true;
+                 		}
+                 	}
+                 	
+                 	System.err.println("REACHABLE?: " + reachable);
+                 	//Check if subgoal blocks other subgoal
+                 	
+                 	
+                 	if (!reachable) {
+                 		System.err.println("NOT REACHABLE");
+                 		unreachable_count += 1;
+                 		if (unreachable_count > 10) {
+                 			break outerwhile;
+                 		}
+                 	} else {
+                 		
+                 	unreachable_count = 0;
+                 	MAsubgoals[agent].remove(agentsubgoal_count);
+                 	subgoal_count += 1;	
+                 	subgoal_split = agent_s.splitSubgoal(agent_s.goals, agent);
                  	
                  	for (char[][] subgoalS : subgoal_split) {
                  		
                  		int[] goal_coord = new int[] {0, 0};
                  		
+                 		char subgoal_char = 0;
                  		outer1:
                  		for (int i=0; i<subgoalS.length; i++) {
                  			for (int j=0; j<subgoalS[i].length; j++) {
                  				if (subgoalS[i][j] != 0) {
+                 					subgoal_char = subgoalS[i][j];
                  					goal_coord = new int[] {i, j};
                  					break outer1;
                  				}
                  			}
                  		}
                  		
-                 		System.err.println("GOALCORD: " + goal_coord);
+                 		int[][] dist_grid = agent_s.getdistance(goal_coord[0], goal_coord[1]);
                  		
-                 		int[][] dist_grid = s.getdistance(goal_coord[0], goal_coord[1]);
-                 		
-                 		s = new State(aRows, aCols, agentColor,
-                         		s.walls, aBoxes, boxColor, subgoalS, dist_grid);
-                 		
-                 	
-	                 	System.err.println("SUBGOAL");
-	                 	for (int i=0; i<subgoal.length; i++) {
-	            			System.err.println(Arrays.toString(s.goals[i]));
-	            		}
-	                 	System.err.println("BOXES");
-	            		for (int i=0; i<aBoxes.length; i++) {
-	            			System.err.println(Arrays.toString(s.boxes[i]));
-	            		}
-	            		
-	            		System.err.println("AGENT POSITION");
-	            		System.err.println("Row: " + Arrays.toString(s.agentRows) + ", Col: " + Arrays.toString(s.agentCols));
-	            		
-	            		System.err.println("AGENT COLORS");
-	            		System.err.println(Arrays.toString(s.agentColors));
-	            		
-	            		System.err.println("BOX COLORS");
-	            		System.err.println(Arrays.toString(s.boxColors));
+                 		agent_s = new State(aRows, aCols, agentColor,
+                         		aWalls, aBoxes, boxColor, subgoalS, dist_grid);
 	                 	
 	                 	if (greedy) {
-	                 		frontier = new FrontierBestFirst(new HeuristicGreedy(s));
+	                 		frontier = new FrontierBestFirst(new HeuristicGreedy(agent_s));
 	                 	}
 	                 	
 	                 	else if (astar) {
-	                 		frontier = new FrontierBestFirst(new HeuristicAStar(s));
+	                 		frontier = new FrontierBestFirst(new HeuristicAStar(agent_s));
 	                 	}
 	                 	
 	                 	else if (wastar) {
-	                 		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(s, 0));
+	                 		frontier = new FrontierBestFirst(new HeuristicWeightedAStar(agent_s, 0));
 	                 	}
 	                 	
 	                 	
-	                 	frontier.add(s);
-	                     HashSet<State> explored = new HashSet<>();
+	                 	frontier.add(agent_s);
+	                    HashSet<State> explored = new HashSet<>();
 	                 	
 	                     while (true) {
 	
@@ -209,19 +279,44 @@ public class GraphSearch {
 	                         }
 	                         
 	
-	                         s = frontier.pop();
-	                         if(s.isGoalState()){
+	                         agent_s = frontier.pop();
+	                         if(agent_s.isGoalState()){
 	                        	System.err.println("SUBGOAL FOUND");
-	
-	                          	for (int i=0; i<subgoal.length; i++) {
-	                     			System.err.println(Arrays.toString(s.boxes[i]));
-	                     		}
 	                        	 
 	                        	 
-	                             for (int row=1; row<s.goals.length-1; row++) {
-	                             	for (int col=1; col<s.goals[row].length-1; col++) {
-	                             		
-	                             		char goal = s.goals[row][col];
+	                          	//Update State
+	                          	s.agentRows[agent] = agent_s.getSingleAgentRow(0)[0];
+	                          	s.agentCols[agent] = agent_s.getSingleAgentCol(0)[0];
+	                          	
+	                          	//Update boxes
+	                          	aBoxes = agent_s.getSingleAgentBoxes(0);
+	                          	for (int i=0; i<aBoxes.length; i++) {
+	                          		for (int j=0; j<aBoxes[i].length; j++) {
+	                          			
+	                          			char agent_box = aBoxes[i][j];
+	                          			char s_box = s.boxes[i][j];
+	                          			boolean agent_wall = agent_s.walls[i][j];
+	                          			
+	                          			
+	                          			
+	                          			if ('A' <= agent_box && agent_box <= 'Z') {
+	                          				if (agent_box != s_box) {
+	                          					s.boxes[i][j] = agent_box;
+	                          				}
+	                          			} else if ('A' <= s_box && s_box <= 'Z') {
+	                          				if (agent_box != s_box) {
+	                          					if (!agent_wall) {
+	                          						s.boxes[i][j] = agent_box;
+	                          					}
+	                          				}
+	                          			}
+	                          		}
+	                          	}
+	                          	
+	                          	//Turn achieved box-subgoal into a wall
+	                             for (int row=1; row<agent_s.goals.length-1; row++) {
+	                             	for (int col=1; col<agent_s.goals[row].length-1; col++) {
+	                             		char goal = agent_s.goals[row][col];
 	                             		if ('A' <= goal && goal <= 'Z') {
 	                             			s.boxes[row][col] = 0;
 	                             			s.walls[row][col] = true;
@@ -229,31 +324,34 @@ public class GraphSearch {
 	                             	}
 	                             }
 	                             
-	                             Action[][] subactions =  s.extractPlan();
-	                             for (Action[] subaction : subactions) {
-	                            	System.err.println(Arrays.toString(subaction));
-	                             	actions.addLast(subaction);
-	                             }
-	                             aRows = s.getSingleAgentRow(0);
-	                         	 aCols = s.getSingleAgentCol(0);
-	                         	 aBoxes = s.getSingleAgentBoxes(0);
+	                            aRows = agent_s.getSingleAgentRow(0);
+	                         	aCols = agent_s.getSingleAgentCol(0);
+	                         	aBoxes = agent_s.getSingleAgentBoxes(0);
+	                         	aWalls = agent_s.otherEntities(0);
+	                             
+	                             Action[][] subactions =  agent_s.extractPlan();
+	                             sequence_solution_length += subactions.length;
+	                             all_plans[agent].addLast(subactions);
+	                             subgoal_actions_order.addLast(agent);
 	                         	 
 	                         	 while (!frontier.isEmpty()) {
 	                         		 frontier.pop();
 	                         	 }
 	                            
-	                         	//first_subgoal = false;
 	                         	System.err.println();
-	                             break;
+	                         	if ('A' <= subgoal_char && subgoal_char <= 'Z') {
+	                         		break outersubgoalloop;
+	                         	}
+	                            break;
 	                         }
 	                         
 	                         
 	                         
-	                         explored.add(s);
+	                         explored.add(agent_s);
 	
 	
 	
-	                         ArrayList<State> States = s.getExpandedStates();
+	                         ArrayList<State> States = agent_s.getExpandedStates();
 	                         for(int i = 0; i < States.size(); ++i){
 	                             State expanded = States.get(i);
 	                             if(!explored.contains(expanded) && !frontier.contains(expanded)) {
@@ -262,63 +360,32 @@ public class GraphSearch {
 	                         }
 	                     }
                      }
+                 	}
+            		}
                  }
             	 
-            	 planner.addPlan(actions.toArray(new Action[0][0]));
-            	 
-            	 individualplans.add(actions.toArray(new Action[0][0]));
-            	 
-            	 
-            	 
-            	 s = new State(initialState.agentRows, initialState.agentCols, initcoloragent,
-                 		initialState.walls, initialState.boxes, initcolorbox, initialState.goals, initialState.distancegrid);
             }
-            System.err.println("DONE");
             
-            int arraycols = individualplans.size();
-            int arrayrows = 0;
             
-            for (int i=0; i<arraycols; i++) {
-            	if (individualplans.get(i).length > arrayrows) {
-            		arrayrows = individualplans.get(i).length;
+            
+            Action[][] finalactions = new Action[sequence_solution_length][agents];
+            for (Action[] row : finalactions) {
+            	Arrays.fill(row, Action.NoOp);
+            }
+            
+            int index = 0;
+            for (int turn : subgoal_actions_order) {
+            	Action[][] currentAction = all_plans[turn].poll();
+            	int action_length = currentAction.length;
+            	for (int i=0; i<action_length; i++) {
+            		finalactions[index][turn] = currentAction[i][0];
+            		index += 1;
             	}
             }
             
-            
-            Action[][] finalactions = new Action[arrayrows][arraycols];
-            
-            for (int i=0; i<arraycols; i++) {
-            	for (int j=0; j<arrayrows; j++) {
-            		if (j < individualplans.get(i).length) {
-            			finalactions[j][i] = individualplans.get(i)[j][0];
-            		}
-            		else {
-            			finalactions[j][i] = Action.NoOp;
-            		}
-            	}
-            }
-            
-//            for (int i=0; i<arrayrows; i++) {
-//            	if (i<individualplans.get(0).length) {
-//            		finalactions[i][0] = individualplans.get(0)[i][0];
-//            	}
-//            	else {
-//            		finalactions[i][0] = Action.NoOp;
-//            	}
-//            }
-//            
-//            for (int i=0; i<individualplans.get(1).length; i++) {
-//            	if (i<individualplans.get(1).length) {
-//            		finalactions[i][1] = individualplans.get(1)[i][0];
-//            	}
-//            	else {
-//            		finalactions[i][1] = Action.NoOp;
-//            	}
-//            }
             
             return finalactions;
             
-            //return actions.toArray(new Action[0][0]);
         }
     }
     

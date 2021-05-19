@@ -5,6 +5,9 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Random;
+import java.util.*;
+
+
 
 public class State
 {
@@ -147,8 +150,8 @@ public class State
     public char[][] getSingleAgentBoxes(int agent) {
     	char[][] boxes = new char[this.boxes.length][this.boxes[0].length];
     	
-    	for (int row=1; row<this.boxes.length; row++) {
-    		for (int col=1; col<this.boxes[row].length; col++) {
+    	for (int row=0; row<this.boxes.length; row++) {
+    		for (int col=0; col<this.boxes[row].length; col++) {
     			
     			char box = this.boxes[row][col];
     			if ('A' <= box && box <= 'Z') {
@@ -160,6 +163,32 @@ public class State
     		}
     	}
     	return boxes;
+    }
+    
+    //Function to return position of all other agents and their boxes
+    //Adds walls to these entities
+    public boolean[][] otherEntities(int agent) {
+    	boolean[][] walls = new boolean[this.walls.length][this.walls[0].length];
+    	
+    	for (int row=0; row<this.walls.length; row++) {
+    		for (int col=0; col<this.walls[row].length; col++) {
+    			walls[row][col] = this.walls[row][col];
+    			char box = this.boxes[row][col];
+    			if ('A' <= box && box <= 'Z') {
+    				if (!this.agentColors[agent].equals(boxColors[box - 'A'])) {
+    					walls[row][col] = true;
+    				}
+    			}
+    		}
+    	}
+    	
+    	for (int i=0; i<this.agentRows.length; i++) {
+    		if (i != agent) {
+    			walls[this.agentRows[i]][this.agentCols[i]] = true;
+    		}
+    	}
+    	
+    	return walls;
     }
     
     
@@ -219,7 +248,7 @@ public class State
     	char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
     	String agentString = Integer.toString(0);
     	char agentchar = agentString.charAt(0);
-    	System.err.println("AGENTCHAR" + agentchar);
+//    	System.err.println("AGENTCHAR" + agentchar);
     	LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
     	char subgoal_char = 0;
     	
@@ -712,5 +741,282 @@ public class State
             s.append("\n");
         }
         return s.toString();
+    }
+    
+    public Coordinates conflictRecognition()
+    {
+        //get the goal color
+        char goal = '0';
+        int goalI = -1;
+        int goalJ = -1;
+        int agentI = -1;
+        int agentJ = -1;
+
+        LinkedList<Point> tempLinkedList = new LinkedList<Point>();
+        Queue<Coordinates> boxCords = new LinkedList<Coordinates>();
+        for(int i = 0; i < goals.length; ++i)
+        {
+            for(int j = 0; j < goals[i].length; ++j)
+            {
+                if(goals[i][j] != 0)
+                {
+                    goal = goals[i][j];
+                    goalI = i;
+                    goalJ = j;
+                    break;
+                }
+            }
+        }
+        
+
+        boolean[][] tempWalls = new boolean[walls.length][];
+        for (int i = 0; i < walls.length; i++)
+        {
+                tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
+        }
+
+        Color c = boxColors[goal - 'A'];
+
+        //turn everything else to walls
+        for(int i = 0; i < boxes.length; ++i)
+        {
+            for(int j = 0; j < boxes[i].length; ++j)
+            {
+                if(boxes[i][j] != 0)
+                {
+                    if(boxColors[boxes[i][j] - 'A'] != c)
+                    {
+                        tempWalls[i][j] = true;
+                    }
+                    else
+                    {
+                        if(goal == boxes[i][j])
+                        {
+                            boxCords.add(new Coordinates(i,j,'0'));
+                        }
+                    }
+                }
+                if(this.agentAt(i, j) != 0)
+                {
+                    if(agentColors[this.agentAt(i, j)-'0'] != c)
+                    {
+                        tempWalls[i][j] = true;
+                    }
+                    else
+                    {
+                        agentI = i;
+                        agentJ = j;
+                    }
+                }
+            }
+        }
+
+
+        int reachedBox = -1;
+        int count = 0;
+
+        Queue<Coordinates> boxCords2 = new LinkedList<>(boxCords);
+
+        while(!boxCords2.isEmpty())
+        {
+
+            System.err.println("Searching through boxes");
+            Queue<Coordinates> q = new LinkedList<Coordinates>();
+
+            q.add(new Coordinates(agentI, agentJ, '0'));
+
+            Coordinates boxCord = boxCords2.poll();
+
+            boolean[][] tempWallsCopy = new boolean[tempWalls.length][];
+            for (int i = 0; i < tempWalls.length; i++)
+            {
+                tempWallsCopy[i] = Arrays.copyOf(tempWalls[i], tempWalls[i].length);
+            }
+
+            tempLinkedList.add(new Point(agentI, agentJ, null));
+            if(recursiveBFS(q, tempWallsCopy, boxCord, tempLinkedList))
+            {
+                reachedBox = count;
+
+                System.err.println("Box is reachable");
+
+                Queue<Coordinates> q2 = new LinkedList<Coordinates>();
+                q2.add(boxCord);
+
+                for (int i = 0; i < tempWalls.length; i++)
+                {
+                    tempWallsCopy[i] = Arrays.copyOf(tempWalls[i], tempWalls[i].length);
+                }
+
+                tempLinkedList.add(new Point(boxCord.x, boxCord.y, null));
+
+                if(recursiveBFS(q2,tempWallsCopy,new Coordinates(goalI, goalJ, '0'), tempLinkedList))
+                {
+                    System.err.println("Goal is reachable");
+                    return new Coordinates(-1, -1, '0');
+                }
+            }
+
+            count++;
+        }
+
+        //we can't reach any box, try to see what's th problem at the first one
+        if(reachedBox == -1)
+        {
+            System.err.println("Didn't reach box");
+            Coordinates boxCord = boxCords.poll();
+            LinkedList<Point> collection = new LinkedList<Point>();
+            LinkedList<Coordinates> path = new LinkedList<Coordinates>();
+            Queue<Coordinates> q = new LinkedList<Coordinates>();
+
+            q.add(new Coordinates(agentI, agentJ, '0'));
+            collection.add(new Point(agentI, agentJ, null));
+
+            for (int i = 0; i < walls.length; i++)
+            {
+                tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
+            }
+
+            recursiveBFS(q,tempWalls,new Coordinates(boxCord.x, boxCord.y, '0'), collection);
+
+            Point p = getPoint(boxCord.x, boxCord.y, collection);
+
+            while(p != null)
+            {
+                path.addFirst(new Coordinates(p.x, p.y, '0'));
+                p=p.parent;
+            }
+
+            for(int i = 0; i < path.size(); ++i)
+            {
+                if(boxes[path.get(i).x][path.get(i).y] != 0)
+                {
+                    if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
+                    {
+                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
+                    }
+                }
+
+                if(this.agentAt(path.get(i).x, path.get(i).y) != 0)
+                {
+                    if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
+                    {
+                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0');
+                    }
+                }
+            }
+        }
+        // we can't reach the goal
+        else
+        {
+            System.err.println("Didn't reach the goal");
+            Coordinates boxCord = boxCords.poll();
+            reachedBox--;
+            while(reachedBox != -1)
+            {
+                boxCord = boxCords.poll();
+                reachedBox--;
+            }
+            LinkedList<Point> collection = new LinkedList<Point>();
+            LinkedList<Coordinates> path = new LinkedList<Coordinates>();
+            Queue<Coordinates> q = new LinkedList<Coordinates>();
+
+            q.add(new Coordinates(boxCord.x, boxCord.y, '0'));
+            collection.add(new Point(boxCord.x, boxCord.y, null));
+
+            for (int i = 0; i < walls.length; i++)
+            {
+                tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
+            }
+
+            recursiveBFS(q,tempWalls,new Coordinates(goalI, goalJ, '0'), collection);
+
+            Point p = getPoint(goalI, goalJ, collection);
+
+            while(p != null)
+            {
+                path.addFirst(new Coordinates(p.x, p.y, '0'));
+                p=p.parent;
+            }
+
+            for(int i = 0; i < path.size(); ++i)
+            {
+                if(boxes[path.get(i).x][path.get(i).y] != 0)
+                {
+                    if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
+                    {
+                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
+                    }
+                }
+
+                if(this.agentAt(path.get(i).x, path.get(i).y) != 0)
+                {
+                    if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
+                    {
+                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0');
+                    }
+                }
+            }
+        }
+        return new Coordinates(-2, -2, '0');
+
+    }
+
+    public Point getPoint(int x, int y, LinkedList<Point> path)
+    {
+        for(int i = 0; i < path.size(); ++i)
+        {
+            if(path.get(i).x == x && path.get(i).y == y)
+            {
+                return path.get(i);
+            }
+        }
+        return new Point(-1, -1, null);
+    }
+
+    public boolean recursiveBFS(Queue<Coordinates> q,
+                                      boolean[][] visited, Coordinates goal, LinkedList<Point> path) {
+        if (q.isEmpty()) {
+            return false;
+        }
+        Coordinates v = q.poll();
+
+        if (v.x == goal.x && v.y == goal.y){
+            return true;
+        }
+
+        if(!visited[v.x+1][v.y])
+        {
+            visited[v.x+1][v.y] = true;
+            q.add(new Coordinates(v.x+1, v.y, v.character));
+            path.add(new Point(v.x+1, v.y, getPoint(v.x, v.y, path)));
+        }
+
+        if(!visited[v.x-1][v.y])
+        {
+            visited[v.x-1][v.y] = true;
+            q.add(new Coordinates(v.x-1, v.y, v.character));
+            path.add(new Point(v.x-1, v.y, getPoint(v.x, v.y, path)));
+        }
+
+        if(!visited[v.x][v.y+1])
+        {
+            visited[v.x][v.y+1] = true;
+            q.add(new Coordinates(v.x, v.y+1, v.character));
+            path.add(new Point(v.x, v.y+1, getPoint(v.x, v.y, path)));
+        }
+
+        if(!visited[v.x][v.y-1])
+        {
+            visited[v.x][v.y-1] = true;
+            q.add(new Coordinates(v.x, v.y-1, v.character));
+            path.add(new Point(v.x, v.y-1, getPoint(v.x, v.y, path)));
+        }
+
+        return recursiveBFS(q, visited, goal, path);
     }
 }
