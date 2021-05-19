@@ -44,7 +44,8 @@ public class GraphSearch {
             int iterations = 0;
 
 
-            boolean greedy = false;
+            State originalState = copyState(initialState);
+			boolean greedy = false;
             boolean wastar = false;
             boolean astar = false;
 
@@ -66,32 +67,31 @@ public class GraphSearch {
             for (int agent=0; agent<initialState.agentRows.length; agent++) {
             	subgoals = initialState.getAgentSubGoals(agent);
             	MAsubgoals[agent] = subgoals;
-            }
+			}
 
-            //Lists to store individual plans, and order to execute plans.
-            LinkedList<Integer> subgoal_actions_order = new LinkedList<Integer>();
-            LinkedList<Action[][]>[] all_plans = new LinkedList[initialState.agentRows.length];
-            for (int i=0; i<all_plans.length; i++) {
-            	all_plans[i] = new LinkedList<Action[][]>();
-            }
+			//Lists to store individual plans, and order to execute plans.
+			LinkedList<Integer> subgoal_actions_order = new LinkedList<Integer>();
+			LinkedList<Action[][]>[] all_plans = new LinkedList[initialState.agentRows.length];
+			for (int i = 0; i < all_plans.length; i++) {
+				all_plans[i] = new LinkedList<Action[][]>();
+			}
 
-            //Maintaining State
-            State s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
-            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
+			//Maintaining State
+			State s = new State(initialState.agentRows, initialState.agentCols, initialState.agentColors,
+					initialState.walls, initialState.boxes, initialState.boxColors, initialState.goals, initialState.distancegrid);
 
-            //State from an agent's perspective
-            State agent_s = new State(initialState.agentRows, initialState.agentCols, State.agentColors,
-            		initialState.walls, initialState.boxes, State.boxColors, initialState.goals, initialState.distancegrid);
+			//State from an agent's perspective
+			State agent_s;
 
-            searchclient.Color[] initcoloragent =  s.agentColors;
-            searchclient.Color[] initcolorbox =  s.boxColors;
-
-
-            CentralPlanner planner = new CentralPlanner(s);
+			searchclient.Color[] initcoloragent = s.agentColors;
+			searchclient.Color[] initcolorbox = s.boxColors;
 
 
-            //Integers to store
-            int agents = s.agentRows.length;
+			CentralPlanner planner = new CentralPlanner(s);
+
+
+			//Integers to store
+			int agents = s.agentRows.length;
             int subgoal_total = 0;
             for (int i=0; i<MAsubgoals.length; i++) {
             	subgoal_total += MAsubgoals[i].size();
@@ -161,31 +161,29 @@ public class GraphSearch {
                  	for (int i=1; i<aBoxes.length-1; i++) {
                  		for (int j=1; j<aBoxes[i].length-1; j++) {
                  			boxchar = aBoxes[i][j];
-                 			if (boxchar == goalchar) {
-                 				src = new int[] {i,j};
-                 				break outer02;
-                 			}
-                 		}
-                 	}
+							if (boxchar == goalchar) {
+								src = new int[]{i, j};
+								break outer02;
+							}
+						}
+					}
 
-                 	System.err.println("CURRENT LEVEL: ");
-                 	char[][] currentlevel = new char[s.boxes.length][s.boxes[0].length];
+					System.err.println("CURRENT LEVEL: ");
+					char[][] currentlevel = new char[s.boxes.length][s.boxes[0].length];
 
-                 	for (int i=0; i<currentlevel.length; i++) {
-                 		for (int j=0; j<currentlevel[i].length; j++) {
-                 			currentlevel[i][j] = ' ';
-                 		}
-                 	}
+					for (char[] chars : currentlevel) {
+						Arrays.fill(chars, ' ');
+					}
 
 
-                 	for (int i=0; i<s.agentRows.length; i++) {
-                 		char b = (char)(i+'0');
-                 		currentlevel[s.agentRows[i]][s.agentCols[i]] = b;
-                 	}
+					for (int i = 0; i < s.agentRows.length; i++) {
+						char b = (char) (i + '0');
+						currentlevel[s.agentRows[i]][s.agentCols[i]] = b;
+					}
 
-                 	for (int i=0; i<s.boxes.length; i++) {
-                 		for (int j=0; j<s.boxes[i].length; j++) {
-                 			char box = s.boxes[i][j];
+					for (int i = 0; i < s.boxes.length; i++) {
+						for (int j = 0; j < s.boxes[i].length; j++) {
+							char box = s.boxes[i][j];
                   			if ('A' <= box && box <= 'Z') {
                   				currentlevel[i][j] = box;
                   			}
@@ -373,9 +371,9 @@ public class GraphSearch {
             Action[][] finalactions = new Action[sequence_solution_length][agents];
             for (Action[] row : finalactions) {
             	Arrays.fill(row, Action.NoOp);
-            }
+			}
 
-            int index = 0;
+            /*int index = 0;
             for (int turn : subgoal_actions_order) {
             	Action[][] currentAction = all_plans[turn].poll();
             	int action_length = currentAction.length;
@@ -383,12 +381,32 @@ public class GraphSearch {
             		finalactions[index][turn] = currentAction[i][0];
             		index += 1;
             	}
-            }
+            }*/
 
+			/*for (int i = 0; i < all_plans.length; i++) {
+				planner.addPlan(i, all_plans[i]);
+				PlanningResult planningResult = planner.plan(initialState, 0);
+				if (planningResult.type != PlanningResult.PlanningResultType.NO_CONFLICT) {
+					System.err.println("Could not find a solution.");
+				}
+			}
+			 */
 
-            return finalactions;
+			System.err.println("Plan before resolution.");
+			for (LinkedList<Action[][]> agent : all_plans) {
+				LinkedList<Action[]> resolvedActions = new LinkedList<>();
+				for (Action[][] steps : agent) {
+					resolvedActions.addAll(Arrays.asList(steps));
+				}
+				for (Action[] step : resolvedActions) {
+					System.err.println(Arrays.toString(step));
+				}
+			}
 
-        }
+			planner.addAllPlans(all_plans);
+			planner.plan(originalState, 0);
+			return planner.getFullPlan();
+		}
     }
 
 
