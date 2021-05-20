@@ -330,35 +330,43 @@ public class State
     	int dist = grid[i][j];
     	
     	//North
-    	if (!this.walls[i-1][j]) {
-    		if (grid[i-1][j] == 0) {
-    			grid[i-1][j] = dist + 1;
-    			queue.add(new int[]{i-1, j});
-    		}
+    	if (i > 0) {
+    		if (!this.walls[i-1][j]) {
+        		if (grid[i-1][j] == 0) {
+        			grid[i-1][j] = dist + 1;
+        			queue.add(new int[]{i-1, j});
+        		}
+        	}
     	}
     	
     	//South
-    	if (!this.walls[i+1][j]) {
-    		if (grid[i+1][j] == 0) {
-    			grid[i+1][j] = dist + 1;
-    			queue.add(new int[]{i+1, j});
-    		}
+    	if (i+1 < grid.length) {
+    		if (!this.walls[i+1][j]) {
+        		if (grid[i+1][j] == 0) {
+        			grid[i+1][j] = dist + 1;
+        			queue.add(new int[]{i+1, j});
+        		}
+        	}
     	}
     	
     	//East
-    	if (!this.walls[i][j+1]) {
-    		if (grid[i][j+1] == 0) {
-    			grid[i][j+1] = dist + 1;
-    			queue.add(new int[]{i, j+1});
-    		}
+    	if(j+1 < grid[0].length) {
+    		if (!this.walls[i][j+1]) {
+        		if (grid[i][j+1] == 0) {
+        			grid[i][j+1] = dist + 1;
+        			queue.add(new int[]{i, j+1});
+        		}
+        	}
     	}
     	
     	//West
-    	if (!this.walls[i][j-1]) {
-    		if (grid[i][j-1] == 0) {
-    			grid[i][j-1] = dist + 1;
-    			queue.add(new int[]{i, j-1});
-    		}
+    	if(j > 0) {
+    		if (!this.walls[i][j-1]) {
+        		if (grid[i][j-1] == 0) {
+        			grid[i][j-1] = dist + 1;
+        			queue.add(new int[]{i, j-1});
+        		}
+        	}
     	}
     	
     	
@@ -768,6 +776,9 @@ public class State
             }
         }
         
+        System.err.println("GOALCOORD: " + goalI + ":" + goalJ);
+        System.err.println("GOALCHAR: " + goal);
+        
 
         boolean[][] tempWalls = new boolean[walls.length][];
         for (int i = 0; i < walls.length; i++)
@@ -792,6 +803,7 @@ public class State
                     {
                         if(goal == boxes[i][j])
                         {
+                        	System.err.println("BOXCOORDINATES: " + i + ":" + j);
                             boxCords.add(new Coordinates(i,j,'0'));
                         }
                     }
