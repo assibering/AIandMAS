@@ -547,20 +547,25 @@ public class GraphSearch {
 			 */
 
 			System.err.println("Plan before resolution.");
+			int minimumLength = Integer.MIN_VALUE;
 			for (LinkedList<Action[][]> agent : all_plans) {
 				LinkedList<Action[]> resolvedActions = new LinkedList<>();
 				for (Action[][] steps : agent) {
 					resolvedActions.addAll(Arrays.asList(steps));
+				}
+				if (resolvedActions.size() > minimumLength) {
+					minimumLength = resolvedActions.size();
 				}
 				for (Action[] step : resolvedActions) {
 					System.err.println(Arrays.toString(step));
 				}
 			}
 			System.err.println("Subgoal order: " + subgoal_actions_order.toString());
+			int[] countPlans = new int[originalState.agentRows.length];
 			for (int i = 0; i < subgoal_actions_order.size(); i += 2) {
 				int turn = subgoal_actions_order.get(i);
-				planner.addSubplan(all_plans[turn].poll(), turn);
-				planner.addSubplan(all_plans[turn].poll(), turn);
+				planner.addSubplan(all_plans[turn].get(countPlans[turn]++), turn);
+				planner.addSubplan(all_plans[turn].get(countPlans[turn]++), turn);
 				try {
 					planner.plan(originalState, 0);
 				} catch (StackOverflowError ignored) {
@@ -570,7 +575,10 @@ public class GraphSearch {
 			// If we fail to find a solution, then at least go sequential - will suck, but at least
 			// it may work
 
-			if (planner.delve(originalState, 0).type == PlanningResult.PlanningResultType.WITH_CONFLICT) {
+			PlanningResult delveResult = planner.delve(originalState, 0);
+
+			if (delveResult.type == PlanningResult.PlanningResultType.WITH_CONFLICT
+					|| delveResult.step < minimumLength) {
 				int index = 0;
 				for (int turn : subgoal_actions_order) {
 					Action[][] currentAction = all_plans[turn].poll();

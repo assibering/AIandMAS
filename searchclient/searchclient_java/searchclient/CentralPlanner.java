@@ -115,7 +115,9 @@ public class CentralPlanner {
         // If there are no actions to be made, we found the full plan
         if (Arrays.stream(jointAction).allMatch(action -> action == Action.NoOp)) {
             System.err.printf("Found full solution at step %d\n", step);
-            return new PlanningResult();
+            PlanningResult result = new PlanningResult();
+            result.step = step;
+            return result;
         }
         // If there are actions to be made, we check them for applicability and conflict
         for (int agent = 0; agent < initialState.agentRows.length; agent++) {
