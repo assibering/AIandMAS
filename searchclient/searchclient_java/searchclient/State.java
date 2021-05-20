@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.Random;
 import java.util.*;
-
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 
 public class State
@@ -404,36 +405,37 @@ public class State
                     return false;
                 }
                 else if ('0' <= goal && goal <= '9' &&
-                         !(this.agentRows[goal - '0'] == row && this.agentCols[goal - '0'] == col))
-                {
+                        !(this.agentRows[goal - '0'] == row && this.agentCols[goal - '0'] == col)) {
                     return false;
                 }
             }
         }
-        
+
         return true;
     }
 
-    public ArrayList<State> getExpandedStates()
-    {
+    public ArrayList<State> getExpandedStates() {
+        return getExpandedStates(IntStream.range(0, this.agentCols.length)
+                .boxed().collect(Collectors.toList()));
+    }
+
+    public ArrayList<State> getExpandedStates(List<Integer> activeAgents) {
         int numAgents = this.agentRows.length;
 
         // Determine list of applicable actions for each individual agent.
         Action[][] applicableActions = new Action[numAgents][];
-        for (int agent = 0; agent < numAgents; ++agent)
-        {
+        for (int agent = 0; agent < numAgents; ++agent) {
+            applicableActions[agent] = new Action[]{};
+        }
+        for (int agent : activeAgents) {
             ArrayList<Action> agentActions = new ArrayList<>(Action.values().length);
-            for (Action action : Action.values())
-            {
+            for (Action action : Action.values()) {
                 if (this.isApplicable(agent, action).isApplicable()) {
                     agentActions.add(action);
                 }
             }
             applicableActions[agent] = agentActions.toArray(new Action[0]);
         }
-        
-        
-        
 
         // Iterate over joint actions, check conflict and generate child states.
         Action[] jointAction = new Action[numAgents];

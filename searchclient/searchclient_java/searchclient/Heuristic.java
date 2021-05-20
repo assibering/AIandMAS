@@ -212,6 +212,8 @@ public abstract class Heuristic
 
     public abstract int f(State s);
 
+    public abstract Heuristic update(State initialState);
+
     @Override
     public int compare(State s1, State s2) {
         return this.f(s1) - this.f(s2);
@@ -222,6 +224,10 @@ class HeuristicAStar
         extends Heuristic {
     public HeuristicAStar(State initialState) {
         super(initialState);
+    }
+
+    public HeuristicAStar update(State initialState) {
+        return new HeuristicAStar(initialState);
     }
 
     @Override
@@ -244,6 +250,10 @@ class HeuristicWeightedAStar
         this.w = w;
     }
 
+    public HeuristicWeightedAStar update(State initialState) {
+        return new HeuristicWeightedAStar(initialState, w);
+    }
+
     @Override
     public int f(State s) {
         return s.g() + this.w * this.h_new(s);
@@ -259,6 +269,10 @@ class HeuristicGreedy
         extends Heuristic {
     public HeuristicGreedy(State initialState) {
         super(initialState);
+    }
+
+    public HeuristicGreedy update(State initialState) {
+        return new HeuristicGreedy(initialState);
     }
 
     @Override

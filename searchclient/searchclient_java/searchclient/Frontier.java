@@ -108,26 +108,26 @@ class FrontierDFS
 }
 
 class FrontierBestFirst
-        implements Frontier
-{
+        implements Frontier {
     private Heuristic heuristic;
     private PriorityQueue<State> queue;
 
-    public FrontierBestFirst(Heuristic h)
-    {
+    public FrontierBestFirst(Heuristic h) {
         this.heuristic = h;
         this.queue = new PriorityQueue<>(65536, h);
     }
 
+    public FrontierBestFirst update(State initialState) {
+        return new FrontierBestFirst(heuristic.update(initialState));
+    }
+
     @Override
-    public void add(State state)
-    {
+    public void add(State state) {
         this.queue.add(state);
     }
 
     @Override
-    public State pop()
-    {
+    public State pop() {
         return this.queue.poll();
     }
 
