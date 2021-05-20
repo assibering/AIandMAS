@@ -140,6 +140,9 @@ public class GraphSearch {
             	}
             	
             	System.err.println("SUBGOALS LEFT: " + subgoalsLeft);
+            	if (subgoalsLeft == 0) {
+            		break outerwhile;
+            	}
             	
             	outersubgoalloop:
             	for (char[][] subgoal : MAsubgoals[agent]) {
