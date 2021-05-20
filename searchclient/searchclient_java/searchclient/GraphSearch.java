@@ -104,11 +104,9 @@ public class GraphSearch {
             while (subgoal_count < subgoal_total) {
 
             for (int agent=0; agent<agents; agent++) {
-
             	s.agentColors = initcoloragent;
             	s.boxColors = initcolorbox;
 
-            	subgoals = MAsubgoals[agent];
 
             	int[] aRows = s.getSingleAgentRow(agent);
             	int[] aCols = s.getSingleAgentCol(agent);
@@ -126,18 +124,44 @@ public class GraphSearch {
             			boxColor[i] = currentColor;
             		}
             	}
+LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
+            	for (int i=0; i<agents; i++) {
+            		if (i != agent && currentColor == s.agentColors[i]) {
+            			same_color_agents.add(i);
+            		}
+            	}
 
-            	int agentsubgoal_count = -1;
 
+            	int agentsubgoal_count = 0;
+
+            	int subgoalsLeft = 0;
+            	for (int i=0; i<MAsubgoals.length; i++) {
+            		subgoalsLeft += MAsubgoals[i].size();
+            	}
+
+            	System.err.println("SUBGOALS LEFT: " + subgoalsLeft);
+            	if (subgoalsLeft == 0) {
+            		break outerwhile;
+            	}
             	outersubgoalloop:
-            	for (char[][] subgoal : subgoals) {
-            		agentsubgoal_count += 1;
+            	for (char[][] subgoal : MAsubgoals[agent]) {
             		LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
+//            		State test_s = new State(s.agentRows, s.agentCols, initcoloragent,
+//                    		s.walls, s.boxes, initcolorbox, subgoal, s.distancegrid);
 
+            		System.err.println("AGENT: " + agent);
+            		System.err.println("SUBGOAL: ");
+            		for (int i=0; i<subgoal.length; i++) {
+            			System.err.println(Arrays.toString(subgoal[i]));
+            		}
+//            		System.err.println("BOXCOLORS: " + Arrays.toString(test_s.boxColors));
+//            		System.err.println("AGENTCOLORS: " + Arrays.toString(test_s.agentColors));
+
+//                 	Coordinates coor = test_s.conflictRecognition(agent);
+//            		System.err.println("CONFICT RECOG: " + coor.x + ":" + coor.y);
 
                  	agent_s = new State(aRows, aCols, agentColor,
                  		aWalls, aBoxes, boxColor, subgoal, s.distancegrid);
-
                  	//Check if subgoal is reachable
                  	char goalchar = 0;
                  	int[] dst1 = new int[] {1,1};
@@ -202,9 +226,13 @@ public class GraphSearch {
              			System.err.println(Arrays.toString(currentlevel[i]));
              		}
 
+boolean reachable = false;
 
+//                 	if (coor.x == -1) {
+//                 		reachable = true;
+//                 	}
+                 	
                  	//Check if dst1 and dst2 can be reached from source
-                 	boolean reachable = false;
                  	int[][] reachables = agent_s.getdistance(src[0], src[1]);
                  	if (reachables[dst1[0]][dst1[1]] != 0) {
                  		if (reachables[dst2[0]][dst2[1]] != 0) {
@@ -213,8 +241,47 @@ public class GraphSearch {
                  	}
 
                  	System.err.println("REACHABLE?: " + reachable);
-                 	//Check if subgoal blocks other subgoal
 
+
+//                 	//Check if subgoal blocks other subgoal
+//                 	boolean[][] temp_walls = new boolean[agent_s.walls.length][agent_s.walls[0].length];
+//                 	for (int i=0; i<agent_s.walls.length; i++) {
+//                 		for (int j=0; j<agent_s.walls[i].length; j++) {
+//                 			temp_walls[i][j] = agent_s.walls[i][j];
+//                 		}
+//                 	}
+//                 	temp_walls[dst1[0]][dst1[1]] = true;
+//
+//                 	State agent_s_test = new State(aRows, aCols, agentColor,
+//                     		temp_walls, aBoxes, boxColor, subgoal, agent_s.distancegrid);
+//
+//                 	int[][] test_reachables = agent_s_test.getdistance(src[0], src[1]);
+//
+//                 	int count_after = 0;
+//                 	for (int i=0; i<test_reachables.length; i++) {
+//                 		for (int j=0; j<test_reachables[i].length; j++) {
+//                 			if (test_reachables[i][j] > 0) {
+//                 				count_after += 1;
+//                 			}
+//                 		}
+//                 	}
+//
+//                 	int count_before = 0;
+//                 	for (int i=0; i<reachables.length; i++) {
+//                 		for (int j=0; j<reachables[i].length; j++) {
+//                 			if (reachables[i][j] > 0) {
+//                 				count_before += 1;
+//                 			}
+//                 		}
+//                 	}
+//
+//                 	if (count_before - 1 > count_after) {
+//
+//
+//
+//
+//                 		reachable = false;
+//                 	}
 
                  	if (!reachable) {
                  		System.err.println("NOT REACHABLE");
@@ -226,6 +293,12 @@ public class GraphSearch {
 
                  	unreachable_count = 0;
                  	MAsubgoals[agent].remove(agentsubgoal_count);
+
+                 	for (int same_col_agent : same_color_agents) {
+                 		MAsubgoals[same_col_agent].remove(agentsubgoal_count);
+                 	}
+
+                 	agentsubgoal_count += 1;
                  	subgoal_count += 1;
                  	subgoal_split = agent_s.splitSubgoal(agent_s.goals, agent);
 
@@ -282,8 +355,9 @@ public class GraphSearch {
 	                         agent_s = frontier.pop();
 	                         if(agent_s.isGoalState()){
 	                        	System.err.println("SUBGOAL FOUND");
-
-
+for (int i=0; i<agent_s.goals.length; i++) {
+	                        		System.err.println(Arrays.toString(agent_s.goals[i]));
+	                        	}
 	                          	//Update State
 	                          	s.agentRows[agent] = agent_s.getSingleAgentRow(0)[0];
 	                          	s.agentCols[agent] = agent_s.getSingleAgentCol(0)[0];

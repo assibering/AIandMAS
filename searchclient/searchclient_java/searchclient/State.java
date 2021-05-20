@@ -204,7 +204,7 @@ public class State
         		
         		if ('A' <= goal && goal <= 'Z') {
         			
-        			if (this.agentColors[agent].equals(this.boxColors[goal - 65])) {
+        			if (this.agentColors[agent].equals(this.boxColors[goal - 'A'])) {
         				char[][] subgoal = new char[this.goals.length][this.goals[0].length];
             			subgoal[row][col] = goal;
             			
@@ -758,7 +758,7 @@ public class State
         return s.toString();
     }
     
-    public Coordinates conflictRecognition()
+    public Coordinates conflictRecognition(int agent)
     {
         //get the goal color
         char goal = '0';
@@ -811,20 +811,29 @@ public class State
                         }
                     }
                 }
-                if(this.agentAt(i, j) != 0)
-                {
-                    if(agentColors[this.agentAt(i, j)-'0'] != c)
-                    {
-                        tempWalls[i][j] = true;
-                    }
-                    else
-                    {
-                        agentI = i;
-                        agentJ = j;
-                    }
-                }
+//                if(this.agentAt(i, j) != 0)
+//                {
+//                    if(agentColors[this.agentAt(i, j)-'0'] != c)
+//                    {
+//                        tempWalls[i][j] = true;
+//                    }
+//                    else
+//                    {
+//                        agentI = i;
+//                        agentJ = j;
+//                    }
+//                }
             }
         }
+        
+        for (int i=0; i<this.agentRows.length; i++) {
+        	if (i != agent) {
+        		tempWalls[this.agentRows[i]][this.agentCols[i]] = true;
+        	}
+        }
+        
+        agentI = this.agentRows[agent];
+		agentJ = this.agentCols[agent];
 
 
         int reachedBox = -1;
