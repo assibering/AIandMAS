@@ -53,13 +53,13 @@ public class AgentWiggleSearch {
             boolean isOnGoal = false;
             if (culprit != null) {
                 //Agent row, col, goal letter, goal color, agent color
-                int agentRow = s.agentRows[culprit - '0'];
-                int agentCol = s.agentCols[culprit - '0'];
+                int agentRow = s.agentRows[culprit];
+                int agentCol = s.agentCols[culprit];
                 char goalLetter = s.goals[agentRow][agentCol];
                 if (goalLetter == 0)
                     continue;
                 Color goalColor = s.boxColors[goalLetter - 'A'];
-                Color agentColor = s.agentColors[culprit - '0'];
+                Color agentColor = s.agentColors[culprit];
                 if (!agentColor.equals(goalColor)) {
                     isOnGoal = true;
                 }

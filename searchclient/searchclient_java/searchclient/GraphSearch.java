@@ -169,7 +169,7 @@ public class GraphSearch {
 					}
 				}
 			}
-			outerwhile:
+
 			while (subgoal_count < subgoal_total) {
 
 				while (!NB_and_R_subgoals.isEmpty()) {
@@ -220,9 +220,6 @@ public class GraphSearch {
 						System.err.println(Arrays.toString(s.goals[i]));
 					}
 
-					//TODO: consider cases where there are more boxes than goals
-					int[] consideredBoxes = new int[26];
-
 					System.err.println("SUBGOAL IS POPPED");
 					s.goals = currentsubgoal;
 
@@ -254,21 +251,6 @@ public class GraphSearch {
 					for (int i = 0; i < s.agentRows.length; i++) {
 						char b = (char) (i + '0');
 						currentlevel[s.agentRows[i]][s.agentCols[i]] = b;
-					}
-
-					int encounteredBoxes = 0;
-					for (int i = 0; i < s.boxes.length; i++) {
-						for (int j = 0; j < s.boxes[i].length; j++) {
-							char box = s.boxes[i][j];
-							// Separate goals per box
-							if ('A' <= box && box <= 'Z') {
-								if (encounteredBoxes++ == consideredBoxes[box - 'A']) {
-									encounteredBoxes = Integer.MAX_VALUE;
-									consideredBoxes[box - 'A']++;
-									currentlevel[i][j] = box;
-								}
-							}
-						}
 					}
 
 					for (int i = 0; i < s.walls.length; i++) {
@@ -574,11 +556,11 @@ public class GraphSearch {
 					System.err.println(Arrays.toString(step));
 				}
 			}
-
-			for (int turn : subgoal_actions_order.stream().distinct().collect(Collectors.toList())) {
-				for (Action[][] currentAction : all_plans[turn]) {
-					planner.addSubplan(currentAction, turn);
-				}
+			System.err.println("Subgoal order: " + subgoal_actions_order.toString());
+			for (int i = 0; i < subgoal_actions_order.size(); i += 2) {
+				int turn = subgoal_actions_order.get(i);
+				planner.addSubplan(all_plans[turn].poll(), turn);
+				planner.addSubplan(all_plans[turn].poll(), turn);
 				try {
 					planner.plan(originalState, 0);
 				} catch (StackOverflowError ignored) {
