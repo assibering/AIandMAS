@@ -2,8 +2,7 @@ package searchclient;
 
 import java.util.Locale;
 
-public enum Color
-{
+public enum Color {
     Blue,
     Red,
     Cyan,
@@ -15,10 +14,8 @@ public enum Color
     Lightblue,
     Brown;
 
-    public static Color fromString(String s)
-    {
-        switch (s.toLowerCase(Locale.ROOT))
-        {
+    public static Color fromString(String s) {
+        switch (s.toLowerCase(Locale.ROOT)) {
             case "blue":
                 return Blue;
             case "red":

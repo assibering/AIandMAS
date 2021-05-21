@@ -2,7 +2,6 @@ package searchclient;
 
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import static searchclient.CentralPlanner.copyState;
 
@@ -24,20 +23,6 @@ public class GraphSearch {
 			};
 
 		} else {
-			//Part 2:
-			//Now try to implement the Graph-Search algorithm from R&N figure 3.7
-			//In the case of "failure to find a solution" you should return null.
-			//Some useful methods on the state class which you will need to use are:
-			//state.isGoalState() - Returns true if the state is a goal state.
-			//state.extractPlan() - Returns the Array of actions used to reach this state.
-			//state.getExpandedStates() - Returns an ArrayList<State> containing the states reachable from the current state.
-			//You should also take a look at Frontier.java to see which methods the Frontier interface exposes
-			//
-			//printSearchStates(explored, frontier): As you can see below, the code will print out status
-			//(#explored states, size of the frontier, #generated states, total time used) for every 10000th node generated.
-			//You might also find it helpful to print out these stats when a solution has been found, so you can keep
-			//track of the exact total number of states generated.
-
 
 			int iterations = 0;
 			CentralPlanner planner = new CentralPlanner(copyState(initialState));
@@ -79,38 +64,6 @@ public class GraphSearch {
 				MAsubgoals[agent] = subgoals;
 			}
 
-			//LinkedList<char[][]> NB_and_R_subgoals = new LinkedList<char[][]>();
-			//LinkedList<Integer> NB_and_R_subgoals_agent = new LinkedList<Integer>();
-//
-			//LinkedList<char[][]> NB_subgoals = new LinkedList<char[][]>();
-			//LinkedList<Integer> NB_subgoals_agent = new LinkedList<Integer>();
-//
-			//LinkedList<char[][]> B_subgoals = new LinkedList<char[][]>();
-			//LinkedList<Integer> B_subgoals_agent = new LinkedList<Integer>();
-//
-			//for (int agent = 0; agent < MAsubgoals.length; agent++) {
-			//	for (char[][] subgoal : MAsubgoals[agent]) {
-			//		if (nonBlocking(initialState, subgoal)) {
-			//			State reachability_test_state = copyState(initialState);
-			//			reachability_test_state.goals = subgoal;
-			//			Coordinates reachable = reachability_test_state.conflictRecognition(agent);
-			//			if (reachable.x < 0) {
-			//				NB_and_R_subgoals.add(subgoal);
-			//				NB_and_R_subgoals_agent.add(agent);
-			//			} else {
-			//				NB_subgoals.add(subgoal);
-			//				NB_subgoals_agent.add(agent);
-			//			}
-			//		} else {
-			//			B_subgoals.add(subgoal);
-			//			B_subgoals_agent.add(agent);
-			//		}
-			//	}
-			//}
-
-//			System.err.println("SUBGOALS ARE PRIORITIZED");
-//			System.err.println();
-
 			//Lists to store individual plans, and order to execute plans.
 			LinkedList<Integer> subgoal_actions_order = new LinkedList<Integer>();
 			LinkedList<Action[][]>[] all_plans = new LinkedList[initialState.agentRows.length];
@@ -144,7 +97,7 @@ public class GraphSearch {
 			int unreachable_count = 0;
 
 
-			// TODO: mark agents as initially blocked by other agents
+			// Mark agents as initially blocked by other agents
 			boolean[] blockedAgents = new boolean[agents];
 			for (int agent = 0; agent < agents; agent++) {
 				List<Character> blocksByAgent = AgentWiggleSearch.checkAgentBlocks(originalState, agent);
@@ -152,10 +105,9 @@ public class GraphSearch {
 					blockedAgents[blockedAgent - '0'] = true;
 				}
 			}
-			//TODO fix this? remains to be seen
+
 			for (int agent = 0; agent < agents; agent++) {
 				if (blockedAgents[agent]) {
-//					System.err.println("Following agent blocked, starting wiggle search: " + agent);
 					Action[][] wigglePlan = AgentWiggleSearch.search(copyState(originalState), centralPlannerFrontier, agent);
 					if (wigglePlan != null) {
 						for (int involvedAgents = 0; involvedAgents < wigglePlan[0].length; involvedAgents++) {
@@ -173,108 +125,84 @@ public class GraphSearch {
 
 			while (subgoal_count < subgoal_total) {
 
-			//	while (!NB_and_R_subgoals.isEmpty()) {
+				//	while (!NB_and_R_subgoals.isEmpty()) {
 
-boolean good_subgoal = false;
-            	char[][] currentsubgoal = new char[s.boxes.length][s.boxes[0].length];
-            	int agentX = 0;
-            	LinkedList<char[][]> subgoals1 = new LinkedList<char[][]>();
+				boolean good_subgoal = false;
+				char[][] currentsubgoal = new char[s.boxes.length][s.boxes[0].length];
+				int agentX = 0;
+				LinkedList<char[][]> subgoals1 = new LinkedList<char[][]>();
 
-            	int subgoal_index = 0;
-            	detectsubgoal:
-            	for (int agent=0; agent<MAsubgoals.length; agent++) {
-            		subgoals1 = s.getAgentSubGoals(agent);
-            		subgoal_index = 0;
-                	for (char[][] subgoal : subgoals1) {
-                		if (nonBlocking(s, subgoal)) {
+				int subgoal_index = 0;
+				detectsubgoal:
+				for (int agent = 0; agent < MAsubgoals.length; agent++) {
+					subgoals1 = s.getAgentSubGoals(agent);
+					subgoal_index = 0;
+					for (char[][] subgoal : subgoals1) {
+						if (nonBlocking(s, subgoal)) {
 
-                			State reachability_test_state = copyState(s);
-                			reachability_test_state.goals = subgoal;
-                			boolean is_reachable = isreachable(reachability_test_state);
+							State reachability_test_state = copyState(s);
+							reachability_test_state.goals = subgoal;
+							boolean is_reachable = isreachable(reachability_test_state);
 
 //                			Coordinates reachable = reachability_test_state.conflictRecognition(agent);
 
-                			if (is_reachable) {
-                				good_subgoal = true;
-                				currentsubgoal = subgoal;
-                				agentX = agent;
-                				break detectsubgoal;
-                			}
-                		}
-                	}
-                	subgoal_index += 1;
-                }
+							if (is_reachable) {
+								good_subgoal = true;
+								currentsubgoal = subgoal;
+								agentX = agent;
+								break detectsubgoal;
+							}
+						}
+					}
+					subgoal_index += 1;
+				}
 
-            	if (!good_subgoal) {
+				if (!good_subgoal) {
 //            		System.err.println("ALL SUBGOALS ARE UNREACHABLE");
-            		subgoal_count -= 1;
+					subgoal_count -= 1;
 
-            		int agentToMove = 0;
-            		detectblocker:
-            		for (int i=0; i<s.agentRows.length; i++) {
-            			for (int agent=0; agent<MAsubgoals.length; agent++) {
-                    		subgoals1 = s.getAgentSubGoals(agent);
-                    		subgoal_index = 0;
-                        	for (char[][] subgoal : subgoals1) {
-                        		if (nonBlocking(s, subgoal)) {
+					int agentToMove = 0;
+					detectblocker:
+					for (int i = 0; i < s.agentRows.length; i++) {
+						for (int agent = 0; agent < MAsubgoals.length; agent++) {
+							subgoals1 = s.getAgentSubGoals(agent);
+							subgoal_index = 0;
+							for (char[][] subgoal : subgoals1) {
+								if (nonBlocking(s, subgoal)) {
 
-                        			State reachability_test_state = copyState(s);
-                        			reachability_test_state.goals = subgoal;
-                        			boolean is_reachable = isreachable_removeAgent(reachability_test_state, i);
+									State reachability_test_state = copyState(s);
+									reachability_test_state.goals = subgoal;
+									boolean is_reachable = isreachable_removeAgent(reachability_test_state, i);
 
 
 //                        			Coordinates reachable = reachability_test_state.conflictRecognition(agent);
 
-                        			if (is_reachable) {
-                        				agentToMove = i;
-                        				good_subgoal = true;
-                        				currentsubgoal = subgoal;
-                        				agentX = agentToMove;
-                        				break detectblocker;
-                        			}
-                        		}
-                        	}
-                        	subgoal_index += 1;
-                        }
-            		}
+									if (is_reachable) {
+										agentToMove = i;
+										good_subgoal = true;
+										currentsubgoal = subgoal;
+										agentX = agentToMove;
+										break detectblocker;
+									}
+								}
+							}
+							subgoal_index += 1;
+						}
+					}
 
-            		int agent_row = s.agentRows[agentToMove];
-            		int agent_col = s.agentRows[agentToMove];
+					int agent_row = s.agentRows[agentToMove];
+					int agent_col = s.agentRows[agentToMove];
 
-            		int[] goal_dest = newAgentPosition(s, agentToMove);
-            		currentsubgoal = new char[currentsubgoal.length][currentsubgoal[0].length];
-            		currentsubgoal[goal_dest[0]][goal_dest[1]] = String.valueOf(0).charAt(0);
+					int[] goal_dest = newAgentPosition(s, agentToMove);
+					currentsubgoal = new char[currentsubgoal.length][currentsubgoal[0].length];
+					currentsubgoal[goal_dest[0]][goal_dest[1]] = String.valueOf(0).charAt(0);
 
-            	}
-					s.agentColors = initcoloragent;
-					s.boxColors = initcolorbox;
+				}
+				s.agentColors = initcoloragent;
+				s.boxColors = initcolorbox;
 
-			//		char[][] currentsubgoal = NB_and_R_subgoals.pollFirst();
-			//		int agent = NB_and_R_subgoals_agent.pollFirst();
-			//		searchclient.Color currentColor = initialState.agentColors[agent];
-searchclient.Color currentColor = s.agentColors[agentX];
-            		
-//            		char currentsubgoal_char = 0;
-//            		for (int i=0; i<currentsubgoal.length; i++) {
-//            			for (int j=0; j<currentsubgoal[i].length; j++) {
-//            				if (currentsubgoal[i][j] != 0) {
-//            					currentsubgoal_char = currentsubgoal[i][j];
-//            				}
-//            			}
-//            		}
-//
-//            		boolean subgoal_exists = false;
-//            		for (int i=0; i<s.goals.length; i++) {
-//            			for (int j=0; j<s.goals[i].length; j++) {
-//            				if (s.goals[i][j] == currentsubgoal_char) {
-//            					subgoal_exists = true;
-//            				}
-//            			}
-//            		}
-//
-//            		if (!subgoal_exists) {
-//            			break;
-//            		}
+
+				searchclient.Color currentColor = s.agentColors[agentX];
 
 
 				char[][] unreachedSubgoals = new char[s.goals.length][s.goals[0].length];
@@ -287,36 +215,15 @@ searchclient.Color currentColor = s.agentColors[agentX];
 					}
 				}
 
-//				System.err.println("ALL GOALS IN S: ");
-		//		for (int i = 0; i < s.goals.length; i++) {
-//					System.err.println(Arrays.toString(s.goals[i]));
-			//	}
-//
-//				System.err.println("SUBGOAL IS POPPED");
-
-				s.goals = currentsubgoal;
-
-		//		for (int i = 0; i < s.goals.length; i++) {
-//					System.err.println(Arrays.toString(s.goals[i]));
-			//	}
-//
-//				System.err.println();
-
-
 				LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
 				for (int i = 0; i < agents; i++) {
 					if (currentColor == s.agentColors[i]) {
 						same_color_agents.add(i);
 					}
 				}
-//                	for (int same_agent : same_color_agents) {
-//                		MAsubgoals[same_agent].remove(subgoal_index);
-//                	}
-
 
 				LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
 
-//				System.err.println("CURRENT LEVEL: ");
 				char[][] currentlevel = new char[s.boxes.length][s.boxes[0].length];
 
 				for (int i = 0; i < currentlevel.length; i++) {
@@ -348,22 +255,12 @@ searchclient.Color currentColor = s.agentColors[agentX];
 					}
 				}
 
-			//	for (int i = 0; i < currentlevel.length; i++) {
-//					System.err.println(Arrays.toString(currentlevel[i]));
-		//		}
-
 				boolean agent_found = false;
 				find_solvable_agent:
 				for (int agentNr : same_color_agents) {
-
-//					System.err.println("CHECKING AGENT: " + agentNr);
-//                		Coordinates reachable_agent = s.conflictRecognition(agentNr);
 					agent_found = reachableBy(s, agentNr);
 
 					if (agent_found) {
-//						System.err.println("AGENT TO SOLVE SUBGOAL IS FOUND: " + agentNr);
-//						System.err.println();
-
 						subgoal_count += 1;
 						int[] aRows = s.getSingleAgentRow(agentNr);
 						int[] aCols = s.getSingleAgentCol(agentNr);
@@ -407,25 +304,6 @@ searchclient.Color currentColor = s.agentColors[agentX];
 							agent_s = new State(aRows, aCols, agentColor,
 									aWalls, aBoxes, boxColor, subsubgoal, dist_grid);
 
-//							System.err.println("SUBSUBGOAL");
-					//		for (int i = 0; i < subsubgoal.length; i++) {
-//								System.err.println(Arrays.toString(subsubgoal[i]));
-						//	}
-//							System.err.println("AGENTROW: " + Arrays.toString(agent_s.agentRows));
-//							System.err.println("AGENTCOL: " + Arrays.toString(agent_s.agentCols));
-//							System.err.println("AGENTCOLORS: " + Arrays.toString(agent_s.agentColors));
-//							System.err.println("BOXCOLORS: " + Arrays.toString(agent_s.boxColors));
-//							System.err.println("BOXES");
-					//		for (int i = 0; i < agent_s.boxes.length; i++) {
-//								System.err.println(Arrays.toString(agent_s.boxes[i]));
-						//	}
-//							System.err.println("DISTANCEGRID");
-					//		for (int i = 0; i < agent_s.distancegrid.length; i++) {
-//								System.err.println(Arrays.toString(agent_s.distancegrid[i]));
-						//	}
-//							System.err.println();
-
-
 							if (greedy) {
 								frontier = new FrontierBestFirst(new HeuristicGreedy(agent_s));
 							} else if (astar) {
@@ -454,10 +332,6 @@ searchclient.Color currentColor = s.agentColors[agentX];
 								agent_s = frontier.pop();
 
 								if (agent_s.isGoalState()) {
-//									System.err.println("SUBGOAL FOUND");
-								//	for (int i = 0; i < agent_s.goals.length; i++) {
-//										System.err.println(Arrays.toString(agent_s.goals[i]));
-								//	}
 
 									//Update State
 									s.agentRows[agentNr] = agent_s.getSingleAgentRow(0)[0];
@@ -543,67 +417,9 @@ searchclient.Color currentColor = s.agentColors[agentX];
 
 				}
 
-//            	}
-
 
 				s.agentColors = initcoloragent;
 				s.boxColors = initcolorbox;
-
-//				System.err.println("STATE S");
-//				System.err.println("GOAL: ");
-		//		for (int i = 0; i < s.goals.length; i++) {
-//					System.err.println(Arrays.toString(s.goals[i]));
-			//	}
-//				System.err.println("AGENTROW: " + Arrays.toString(s.agentRows));
-//				System.err.println("AGENTCOL: " + Arrays.toString(s.agentCols));
-//				System.err.println("AGENTCOLORS: " + Arrays.toString(s.agentColors));
-//				System.err.println("BOXCOLORS: " + Arrays.toString(s.boxColors));
-//				System.err.println("BOXES");
-		//		for (int i = 0; i < s.boxes.length; i++) {
-//					System.err.println(Arrays.toString(s.boxes[i]));
-			//	}
-//				System.err.println("DISTANCEGRID");
-		//		for (int i = 0; i < s.distancegrid.length; i++) {
-//					System.err.println(Arrays.toString(s.distancegrid[i]));
-			//	}
-//				System.err.println();
-//            	 subgoals = new LinkedList<char[][]>();
-//                 MAsubgoals = new LinkedList[s.agentRows.length];
-//
-//
-//                 for (int agent=0; agent<s.agentRows.length; agent++) {
-//                 	subgoals = s.getAgentSubGoals(agent);
-//                 	MAsubgoals[agent] = subgoals;
-//                 }
-//
-//                 NB_and_R_subgoals = new LinkedList<char[][]>();
-//                 NB_and_R_subgoals_agent = new LinkedList<Integer>();
-//
-//                 NB_subgoals = new LinkedList<char[][]>();
-//                 NB_subgoals_agent = new LinkedList<Integer>();
-//
-//                 B_subgoals = new LinkedList<char[][]>();
-//                 B_subgoals_agent = new LinkedList<Integer>();
-//
-//                 for (int agent=0; agent<MAsubgoals.length; agent++) {
-//                 	for (char[][] subgoal : MAsubgoals[agent]) {
-//                 		if (nonBlocking(s, subgoal)) {
-//                 			State reachability_test_state = copyState(s);
-//                 			reachability_test_state.goals = subgoal;
-//                 			Coordinates reachable = reachability_test_state.conflictRecognition(agent);
-//                 			if (reachable.x < 0) {
-//                 				NB_and_R_subgoals.add(subgoal);
-//                 				NB_and_R_subgoals_agent.add(agent);
-//                 			} else {
-//                 				NB_subgoals.add(subgoal);
-//                 				NB_subgoals_agent.add(agent);
-//                 			}
-//                 		} else {
-//                 			B_subgoals.add(subgoal);
-//                 			B_subgoals_agent.add(agent);
-//                 		}
-//                 	}
-//                 }
 
 			}
 
@@ -612,33 +428,6 @@ searchclient.Color currentColor = s.agentColors[agentX];
 				Arrays.fill(row, Action.NoOp);
 			}
 
-            /*int index = 0;
-            for (int turn : subgoal_actions_order) {
-            	Action[][] currentAction = all_plans[turn].poll();
-            	int action_length = currentAction.length;
-            	for (int i=0; i<action_length; i++) {
-            		finalactions[index][turn] = currentAction[i][0];
-            		index += 1;
-            	}
-            }*/
-
-			/*for (int i = 0; i < all_plans.length; i++) {
-				planner.addPlan(i, all_plans[i]);
-				PlanningResult planningResult = planner.plan(initialState, 0);
-				if (planningResult.type != PlanningResult.PlanningResultType.NO_CONFLICT) {
-					System.err.println("Could not find a solution.");
-				}
-			}
-			 */
-
-			// TODO: minimum length requirement
-			// If we know when the box is picked up (we get it from list of plans)
-			// Then we know how long our plan must be in minimum to work with this
-			// We can then pad with NoOps until this length is met
-			// So that in worst case we don't run out of steps to NoOp on
-			// But what would be the length? Since we have global order, we
-			// know that for us to work, one of these agents will have to move
-//			System.err.println("Plan before resolution.");
 			int minimumLength = Integer.MIN_VALUE;
 			for (LinkedList<Action[][]> agent : all_plans) {
 				LinkedList<Action[]> resolvedActions = new LinkedList<>();
@@ -648,21 +437,22 @@ searchclient.Color currentColor = s.agentColors[agentX];
 				if (resolvedActions.size() > minimumLength) {
 					minimumLength = resolvedActions.size();
 				}
-//				for (Action[] step : resolvedActions) {
-//					System.err.println(Arrays.toString(step));
-//				}
 			}
 
-//			System.err.println("Subgoal order: " + subgoal_actions_order.toString());
+			// Plan padding
+			// If we know when the box is picked up (we get it from list of plans)
+			// Then we know how long our plan must be in minimum to work with this
+			// We can then pad with NoOps until this length is met
+			// So that in worst case we don't run out of steps to NoOp on
+			// But what would be the length? Since we have global order, we
+			// know that for us to work, one of these agents will have to move
 			int[] countPlans = new int[originalState.agentRows.length];
 			int[] subactionLengths = new int[originalState.agentRows.length];
 			for (int i = 0; i < subgoal_actions_order.size(); i++) {
 				int turn = subgoal_actions_order.get(i);
 				Action[][] subplan = all_plans[turn].get(countPlans[turn]++);
 				int currentMaximumLength = Arrays.stream(subactionLengths).max().orElse(0);
-//				System.err.println("Maximum subaction lengths: " + currentMaximumLength);
 				if (subplan.length + subactionLengths[turn] < currentMaximumLength) {
-					// TODO padding
 					ArrayList<Action[]> subplanList = new ArrayList<>();
 					Collections.addAll(subplanList, subplan);
 					for (int j = subplan.length + subactionLengths[turn]; j < currentMaximumLength; j++) {
@@ -705,36 +495,36 @@ searchclient.Color currentColor = s.agentColors[agentX];
 
     public static boolean nonBlocking(State currentState, char[][] subgoal) {
 
-    	int goal_row = -1;
-    	int goal_col = -1;
+		int goal_row = -1;
+		int goal_col = -1;
 
-    	outerloop:
-    	for (int i=0; i<subgoal.length; i++) {
-    		for (int j=0; j<subgoal[i].length; j++) {
-    			if (subgoal[i][j] != 0) {
-    				goal_row = i;
-    				goal_col = j;
-    				break outerloop;
-    			}
-    		}
-    	}
+		outerloop:
+		for (int i = 0; i < subgoal.length; i++) {
+			for (int j = 0; j < subgoal[i].length; j++) {
+				if (subgoal[i][j] != 0) {
+					goal_row = i;
+					goal_col = j;
+					break outerloop;
+				}
+			}
+		}
 
-    	State test_state = copyState(currentState);
+		State test_state = copyState(currentState);
 
-    	test_state.walls[goal_row][goal_col] = true;
+		test_state.walls[goal_row][goal_col] = true;
 
-     	boolean[] wallneighboors = new boolean[4];
-     	wallneighboors[0] = test_state.walls[goal_row-1][goal_col];
-     	wallneighboors[1] = test_state.walls[goal_row+1][goal_col];
-     	wallneighboors[2] = test_state.walls[goal_row][goal_col-1];
-     	wallneighboors[3] = test_state.walls[goal_row][goal_col+1];
+		boolean[] wallneighboors = new boolean[4];
+		wallneighboors[0] = test_state.walls[goal_row - 1][goal_col];
+		wallneighboors[1] = test_state.walls[goal_row + 1][goal_col];
+		wallneighboors[2] = test_state.walls[goal_row][goal_col - 1];
+		wallneighboors[3] = test_state.walls[goal_row][goal_col + 1];
 
-     	LinkedList<int[]> goal_neighboors = new LinkedList<int[]>();
-     	for (int i=0; i<wallneighboors.length; i++) {
-     		if(!wallneighboors[i]) {
-     			if (i == 0) {
-     				goal_neighboors.add(new int[] {goal_row-1, goal_col});
-     			} else if (i==1) {
+		LinkedList<int[]> goal_neighboors = new LinkedList<int[]>();
+		for (int i = 0; i < wallneighboors.length; i++) {
+			if (!wallneighboors[i]) {
+				if (i == 0) {
+					goal_neighboors.add(new int[]{goal_row - 1, goal_col});
+				} else if (i == 1) {
 					goal_neighboors.add(new int[]{goal_row + 1, goal_col});
 				} else if (i == 2) {
 					goal_neighboors.add(new int[]{goal_row, goal_col - 1});
@@ -756,471 +546,442 @@ searchclient.Color currentColor = s.agentColors[agentX];
 				}
 			}
 		}
-//     	System.err.println(Arrays.toString(dst));
-     	int currRegion = 2;
-     	for (int i=0; i<goal_neighboors.size(); i++) {
-     		dst = goal_neighboors.get(i);
-     		if (region[dst[0]][dst[1]] == 0) {
-//     			System.err.println(Arrays.toString(dst));
-     			int[][] region_temp = test_state.getdistance(dst[0],dst[1]);
-     			for (int j=0; j<region_temp.length; j++) {
-             		for(int k=0; k<region_temp[j].length; k++) {
-             			if (region_temp[j][k] != 0) {
-             				region[j][k] = currRegion;
-             			}
-             		}
-             	}
-     		}
-     		currRegion += 1;
-     	}
+		int currRegion = 2;
+		for (int i = 0; i < goal_neighboors.size(); i++) {
+			dst = goal_neighboors.get(i);
+			if (region[dst[0]][dst[1]] == 0) {
+				int[][] region_temp = test_state.getdistance(dst[0], dst[1]);
+				for (int j = 0; j < region_temp.length; j++) {
+					for (int k = 0; k < region_temp[j].length; k++) {
+						if (region_temp[j][k] != 0) {
+							region[j][k] = currRegion;
+						}
+					}
+				}
+			}
+			currRegion += 1;
+		}
 
-     	currRegion -= 1;
+		currRegion -= 1;
 
-     	LinkedList<Character>[] agent_chars = new LinkedList[currRegion];
-     	for (int i=0; i<agent_chars.length; i++) {
-     		agent_chars[i] = new LinkedList<Character>();
-     	}
+		LinkedList<Character>[] agent_chars = new LinkedList[currRegion];
+		for (int i = 0; i < agent_chars.length; i++) {
+			agent_chars[i] = new LinkedList<Character>();
+		}
 
-     	LinkedList<Character>[] box_chars = new LinkedList[currRegion];
-     	for (int i=0; i<box_chars.length; i++) {
-     		box_chars[i] = new LinkedList<Character>();
-     	}
+		LinkedList<Character>[] box_chars = new LinkedList[currRegion];
+		for (int i = 0; i < box_chars.length; i++) {
+			box_chars[i] = new LinkedList<Character>();
+		}
 
-     	LinkedList<Character>[] goal_chars = new LinkedList[currRegion];
-     	for (int i=0; i<goal_chars.length; i++) {
-     		goal_chars[i] = new LinkedList<Character>();
-     	}
+		LinkedList<Character>[] goal_chars = new LinkedList[currRegion];
+		for (int i = 0; i < goal_chars.length; i++) {
+			goal_chars[i] = new LinkedList<Character>();
+		}
 
-     	//Adding boxes and goals in region
-     	int thisregion;
-     	for (int i=0; i<region.length; i++) {
-     		for (int j=0; j<region[i].length; j++) {
-     			thisregion = region[i][j];
-     			if (thisregion != 0) {
+		//Adding boxes and goals in region
+		int thisregion;
+		for (int i = 0; i < region.length; i++) {
+			for (int j = 0; j < region[i].length; j++) {
+				thisregion = region[i][j];
+				if (thisregion != 0) {
 
-     				if (test_state.boxes[i][j] != 0) {
-     					box_chars[thisregion-1].add(test_state.boxes[i][j]);
-     				} else if (test_state.goals[i][j] != 0) {
-     					goal_chars[thisregion-1].add(test_state.goals[i][j]);
-     				}
+					if (test_state.boxes[i][j] != 0) {
+						box_chars[thisregion - 1].add(test_state.boxes[i][j]);
+					} else if (test_state.goals[i][j] != 0) {
+						goal_chars[thisregion - 1].add(test_state.goals[i][j]);
+					}
 
-     			}
-     		}
-     	}
+				}
+			}
+		}
 
-     	//Adding agents in region
-     	for (int i=0; i<test_state.agentRows.length; i++) {
-     		int agent_row = test_state.agentRows[i];
-     		int agent_col = test_state.agentCols[i];
+		//Adding agents in region
+		for (int i = 0; i < test_state.agentRows.length; i++) {
+			int agent_row = test_state.agentRows[i];
+			int agent_col = test_state.agentCols[i];
 
-     		int agentregion = region[agent_row][agent_col];
+			int agentregion = region[agent_row][agent_col];
 
-     		if (agentregion != 0) {
-     			char agent_char = (char)(i+'0');
-     			agent_chars[agentregion-1].add(agent_char);
-     		}
-if (agent_row == goal_row && agent_row == goal_row) {
-     			char agent_char = (char)(i+'0');
-     			for (int regions_count = 0; regions_count<agent_chars.length; regions_count++) {
-     				agent_chars[regions_count].add(agent_char);
-     			}
-     		}
-     	}
+			if (agentregion != 0) {
+				char agent_char = (char) (i + '0');
+				agent_chars[agentregion - 1].add(agent_char);
+			}
+			if (agent_row == goal_row && agent_row == goal_row) {
+				char agent_char = (char) (i + '0');
+				for (int regions_count = 0; regions_count < agent_chars.length; regions_count++) {
+					agent_chars[regions_count].add(agent_char);
+				}
+			}
+		}
 
 
-     	for (int i=0; i<agent_chars.length; i++) {
+		for (int i = 0; i < agent_chars.length; i++) {
 
-     		for (char goal : goal_chars[i]) {
-     				// Box check
-     				boolean boxFound = false;
-     				Color boxColor = null;
-     				for (int j=0; j<box_chars[i].size(); j++) {
-     					if (box_chars[i].get(j).equals(goal)) {
-     						boxColor = test_state.boxColors[box_chars[i].get(j) - 'A'];
-     						box_chars[i].remove(j);
-     						boxFound = true;
-     						break;
-     					}
-     				}
-     				if(!boxFound) {
-     					return false;
-     				}
+			for (char goal : goal_chars[i]) {
+				// Box check
+				boolean boxFound = false;
+				Color boxColor = null;
+				for (int j = 0; j < box_chars[i].size(); j++) {
+					if (box_chars[i].get(j).equals(goal)) {
+						boxColor = test_state.boxColors[box_chars[i].get(j) - 'A'];
+						box_chars[i].remove(j);
+						boxFound = true;
+						break;
+					}
+				}
+				if (!boxFound) {
+					return false;
+				}
 
-     				// Agent check
-     				boolean agentFound = false;
-     				for(int j = 0; j < agent_chars[i].size(); j++) {
-     					if(test_state.agentColors[agent_chars[i].get(j) - '0'].equals(boxColor)) {
-     						agentFound = true;
-     						break;
-     					}
-     				}
-     				if(!agentFound) {
-     					return false;
-     				}
-     		}
-     	}
+				// Agent check
+				boolean agentFound = false;
+				for (int j = 0; j < agent_chars[i].size(); j++) {
+					if (test_state.agentColors[agent_chars[i].get(j) - '0'].equals(boxColor)) {
+						agentFound = true;
+						break;
+					}
+				}
+				if (!agentFound) {
+					return false;
+				}
+			}
+		}
 
-     	return true;
+		return true;
 
-    }
-public static boolean reachableBy(State s, int agent) {
+	}
 
-    	State test = copyState(s);
+	public static boolean reachableBy(State s, int agent) {
 
-    	int subgoal_row = 0;
-    	int subgoal_col = 0;
-    	char subgoal_char = 0;
+		State test = copyState(s);
 
-    	outer:
-    	for (int i=0; i<test.goals.length; i++) {
-    		for (int j=0; j<test.goals[i].length; j++) {
-    			if (test.goals[i][j] != 0) {
-    				subgoal_row = i;
-    				subgoal_col = j;
-    				subgoal_char = test.goals[i][j];
-    				break outer;
-    			}
-    		}
-    	}
+		int subgoal_row = 0;
+		int subgoal_col = 0;
+		char subgoal_char = 0;
 
-    	if ('A' <= subgoal_char && subgoal_char <= 'Z') {
+		outer:
+		for (int i = 0; i < test.goals.length; i++) {
+			for (int j = 0; j < test.goals[i].length; j++) {
+				if (test.goals[i][j] != 0) {
+					subgoal_row = i;
+					subgoal_col = j;
+					subgoal_char = test.goals[i][j];
+					break outer;
+				}
+			}
+		}
 
-    		int color_index = subgoal_char - 'A';
-        	Color currentColor = test.boxColors[color_index];
+		if ('A' <= subgoal_char && subgoal_char <= 'Z') {
 
-        	for (int i=0; i<test.boxes.length; i++) {
-        		for (int j=0; j<test.boxes[i].length; j++) {
-        			if (test.boxes[i][j] != 0) {
-        				if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
-        					test.walls[i][j] = true;
-        				}
-        			}
-        		}
-        	}
+			int color_index = subgoal_char - 'A';
+			Color currentColor = test.boxColors[color_index];
 
-        	for (int i=0; i<test.agentRows.length; i++) {
-        		if (i != agent) {
-        			test.walls[test.agentRows[i]][test.agentCols[i]] = true;
-        		}
-        	}
+			for (int i = 0; i < test.boxes.length; i++) {
+				for (int j = 0; j < test.boxes[i].length; j++) {
+					if (test.boxes[i][j] != 0) {
+						if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
+							test.walls[i][j] = true;
+						}
+					}
+				}
+			}
 
-        	int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+			for (int i = 0; i < test.agentRows.length; i++) {
+				if (i != agent) {
+					test.walls[test.agentRows[i]][test.agentCols[i]] = true;
+				}
+			}
 
-        	boolean reachable = false;
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
 
-        	if (reachables[test.agentRows[agent]][test.agentCols[agent]] > 0) {
-        		reachable = true;
-        	}
+			boolean reachable = false;
 
-        	return reachable;
+			if (reachables[test.agentRows[agent]][test.agentCols[agent]] > 0) {
+				reachable = true;
+			}
 
-    	}
+			return reachable;
 
-    	else {
+		} else {
 
-    		int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
-    		int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+			int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
 
-    		boolean reachable = false;
-    		if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
-    			reachable = true;
-    		}
+			boolean reachable = false;
+			if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
+				reachable = true;
+			}
 
-    		return reachable;
-    	}
+			return reachable;
+		}
 
 
     }
-
 
 
     public static boolean isreachable(State s) {
 
-    	State test = copyState(s);
+		State test = copyState(s);
 
-    	int subgoal_row = 0;
-    	int subgoal_col = 0;
-    	char subgoal_char = 0;
+		int subgoal_row = 0;
+		int subgoal_col = 0;
+		char subgoal_char = 0;
 
-    	outer:
-    	for (int i=0; i<test.goals.length; i++) {
-    		for (int j=0; j<test.goals[i].length; j++) {
-    			if (test.goals[i][j] != 0) {
-    				subgoal_row = i;
-    				subgoal_col = j;
-    				subgoal_char = test.goals[i][j];
-    				break outer;
-    			}
-    		}
-    	}
+		outer:
+		for (int i = 0; i < test.goals.length; i++) {
+			for (int j = 0; j < test.goals[i].length; j++) {
+				if (test.goals[i][j] != 0) {
+					subgoal_row = i;
+					subgoal_col = j;
+					subgoal_char = test.goals[i][j];
+					break outer;
+				}
+			}
+		}
 
 
-    	if ('A' <= subgoal_char && subgoal_char <= 'Z') {
+		if ('A' <= subgoal_char && subgoal_char <= 'Z') {
 
-    		int color_index = subgoal_char - 'A';
-        	Color currentColor = test.boxColors[color_index];
+			int color_index = subgoal_char - 'A';
+			Color currentColor = test.boxColors[color_index];
 
-        	for (int i=0; i<test.boxes.length; i++) {
-        		for (int j=0; j<test.boxes[i].length; j++) {
-        			if (test.boxes[i][j] != 0) {
-        				if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
-        					test.walls[i][j] = true;
-        				}
-        			}
-        		}
-        	}
+			for (int i = 0; i < test.boxes.length; i++) {
+				for (int j = 0; j < test.boxes[i].length; j++) {
+					if (test.boxes[i][j] != 0) {
+						if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
+							test.walls[i][j] = true;
+						}
+					}
+				}
+			}
 //System.err.println("boxcolor: " + currentColor);
-        	LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
-        	for (int i=0; i<test.agentRows.length; i++) {
-        		if (currentColor == s.agentColors[i]) {
+			LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
+			for (int i = 0; i < test.agentRows.length; i++) {
+				if (currentColor == s.agentColors[i]) {
 //        			System.err.println("agentcolor: " + s.agentColors[i]);
-        			same_color_agents.add(i);
-        		} else {
+					same_color_agents.add(i);
+				} else {
 
-        			test.walls[test.agentRows[i]][test.agentCols[i]] = true;
-        		}
-        	}
-
-        	if (test.walls[subgoal_row][subgoal_col]) {
-        		for (int i=0; i<test.agentRows.length; i++) {
-            		if (currentColor != s.agentColors[i]) {
-            			if (test.agentRows[i] == subgoal_row) {
-            				if (test.agentCols[i] == subgoal_col) {
-            					return false;
-            				}
-            			}
-            		}
-            	}
-        	}
-
-        	int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
-        	
-        	boolean reachable = false;
-        	for (int agent : same_color_agents) {
-        		if (reachables[test.agentRows[agent]][test.agentCols[agent]] > 0) {
-//        			System.err.println("AGENTROW: " + test.agentRows[agent] + " AGENTCOL: " + test.agentCols[agent]);
-        			reachable = true;
-        			break;
-        		}
-        	}
-
-        	reachable = false;
-        	for (int i=0; i<test.boxes.length; i++) {
-        		for (int j=0; j<test.boxes[i].length; j++) {
-        			if (test.boxes[i][j] == subgoal_char) {
-        				if (reachables[i][j] > 0) {
-        					reachable = true;
-        				}
-        			}
-        		}
-        	}
-
-//        	System.err.println("REACHABILITY MATRIX:");
-//        	for (int i=0; i<reachables.length;i++) {
-//        		System.err.println(Arrays.toString(reachables[i]));
-//        	}
-        	
-        	return reachable;
-    		
-    	}
-    	
-    	else {
-
-    		int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
-    		int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
-
-    		boolean reachable = false;
-    		if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
-    			reachable = true;
-    		}
-
-    		return reachable;
-    	}
-
-
-    }
-
-
-public static boolean isreachable_removeAgent(State s, int agent) {
-
-    	State test = copyState(s);
-
-    	int subgoal_row = 0;
-    	int subgoal_col = 0;
-    	char subgoal_char = 0;
-
-    	outer:
-    	for (int i=0; i<test.goals.length; i++) {
-    		for (int j=0; j<test.goals[i].length; j++) {
-    			if (test.goals[i][j] != 0) {
-    				subgoal_row = i;
-    				subgoal_col = j;
-    				subgoal_char = test.goals[i][j];
-    				break outer;
-    			}
-    		}
-    	}
-
-
-    	if ('A' <= subgoal_char && subgoal_char <= 'Z') {
-
-    		int color_index = subgoal_char - 'A';
-        	Color currentColor = test.boxColors[color_index];
-
-        	for (int i=0; i<test.boxes.length; i++) {
-        		for (int j=0; j<test.boxes[i].length; j++) {
-        			if (test.boxes[i][j] != 0) {
-        				if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
-        					test.walls[i][j] = true;
-        				}
-        			}
-        		}
-        	}
-
-        	LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
-        	for (int i=0; i<test.agentRows.length; i++) {
-        		if (currentColor == s.agentColors[i]) {
-        			same_color_agents.add(i);
-        		} else {
-        			if (i != agent) {
-        				test.walls[test.agentRows[i]][test.agentCols[i]] = true;
-        			}
-        		}
-        	}
-
-        	if (test.walls[subgoal_row][subgoal_col]) {
-        		for (int i=0; i<test.agentRows.length; i++) {
-            		if (currentColor != s.agentColors[i]) {
-            			if (test.agentRows[i] == subgoal_row) {
-            				if (test.agentCols[i] == subgoal_col) {
-            					return false;
-            				}
-            			}
-            		}
-            	}
-        	}
-
-        	int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
-
-        	boolean reachable = false;
-        	for (int agent1 : same_color_agents) {
-        		if (reachables[test.agentRows[agent1]][test.agentCols[agent1]] > 0) {
-//        			System.err.println("AGENTROW: " + test.agentRows[agent1] + " AGENTCOL: " + test.agentCols[agent1]);
-        			reachable = true;
-        			break;
-        		}
-        	}
-
-        	reachable = false;
-        	for (int i=0; i<test.boxes.length; i++) {
-        		for (int j=0; j<test.boxes[i].length; j++) {
-        			if (test.boxes[i][j] == subgoal_char) {
-        				if (reachables[i][j] > 0) {
-        					reachable = true;
-        				}
-        			}
-        		}
-        	}
-
-//        	System.err.println("REACHABILITY MATRIX:");
-//        	for (int i=0; i<reachables.length;i++) {
-//        		System.err.println(Arrays.toString(reachables[i]));
-//        	}
-        	return reachable;
-
-    	}
-
-    	else {
-
-    		int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
-    		int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
-
-    		boolean reachable = false;
-    		if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
-    			reachable = true;
-    		}
-
-    		return reachable;
-    	}
-
-
-    }
-
-
-
-public static int[] newAgentPosition (State s, int agent) {
-
-	State test = copyState(s);
-for (int otheragent=0; otheragent<test.agentRows.length; otheragent++) {
-		if (otheragent != agent) {
-			test.walls[test.agentRows[otheragent]][test.agentCols[otheragent]] = true;
-		}
-	}
-
-	int[][] reachables = test.getdistance(test.agentRows[agent], test.agentCols[agent]);
-
-//	System.err.println("REACHABLES FOR BLOCKING AGENT: " + agent);
-//	for (int i=0; i<reachables.length; i++) {
-//		System.err.println(Arrays.toString(reachables[i]));
-//	}
-
-	int[] goalcell = new int[] {test.agentRows[agent] + 1, test.agentCols[agent] + 1};
-	LinkedList<int[]> neighboorcells = new LinkedList<int[]>();
-	neighboorcells.add(new int[] {test.agentRows[agent], test.agentCols[agent]});
-	boolean reachable = false;
-
-	int count = 0;
-	while (!reachable) {
-
-		if (count > 200) {
-			break;
-		}
-
-		int[] currentcell = neighboorcells.poll();
-		State test1 = copyState(test);
-		test1.agentRows[agent] = currentcell[0];
-		test1.agentCols[agent] = currentcell[1];
-
-		if (isreachable(test1)) {
-			goalcell = currentcell;
-			reachable = true;
-			break;
-		}
-
-		else {
-
-			//North neighboor
-			if (reachables[currentcell[0]-1][currentcell[1]] > 0) {
-				neighboorcells.add(new int[] {currentcell[0]-1, currentcell[1]});
+					test.walls[test.agentRows[i]][test.agentCols[i]] = true;
+				}
 			}
 
-			//South neighboor
-			if (reachables[currentcell[0]+1][currentcell[1]] > 0) {
-				neighboorcells.add(new int[] {currentcell[0]+1, currentcell[1]});
+			if (test.walls[subgoal_row][subgoal_col]) {
+				for (int i = 0; i < test.agentRows.length; i++) {
+					if (currentColor != s.agentColors[i]) {
+						if (test.agentRows[i] == subgoal_row) {
+							if (test.agentCols[i] == subgoal_col) {
+								return false;
+							}
+						}
+					}
+				}
 			}
 
-			//West neighboor
-			if (reachables[currentcell[0]][currentcell[1]-1] > 0) {
-				neighboorcells.add(new int[] {currentcell[0], currentcell[1]-1});
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+
+			boolean reachable = false;
+			for (int agent : same_color_agents) {
+				if (reachables[test.agentRows[agent]][test.agentCols[agent]] > 0) {
+					reachable = true;
+					break;
+				}
 			}
 
-			//East neighboor
-			if (reachables[currentcell[0]][currentcell[1]+1] > 0) {
-				neighboorcells.add(new int[] {currentcell[0], currentcell[1]+1});
+			reachable = false;
+			for (int i = 0; i < test.boxes.length; i++) {
+				for (int j = 0; j < test.boxes[i].length; j++) {
+					if (test.boxes[i][j] == subgoal_char) {
+						if (reachables[i][j] > 0) {
+							reachable = true;
+						}
+					}
+				}
 			}
 
+			return reachable;
+
+		} else {
+
+			int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+
+			boolean reachable = false;
+			if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
+				reachable = true;
+			}
+
+			return reachable;
 		}
 
-		count += 1;
 
 	}
 
-	return goalcell;
 
-}
+	public static boolean isreachable_removeAgent(State s, int agent) {
+
+		State test = copyState(s);
+
+		int subgoal_row = 0;
+		int subgoal_col = 0;
+		char subgoal_char = 0;
+
+		outer:
+		for (int i = 0; i < test.goals.length; i++) {
+			for (int j = 0; j < test.goals[i].length; j++) {
+				if (test.goals[i][j] != 0) {
+					subgoal_row = i;
+					subgoal_col = j;
+					subgoal_char = test.goals[i][j];
+					break outer;
+				}
+			}
+		}
 
 
+		if ('A' <= subgoal_char && subgoal_char <= 'Z') {
 
+			int color_index = subgoal_char - 'A';
+			Color currentColor = test.boxColors[color_index];
+
+			for (int i = 0; i < test.boxes.length; i++) {
+				for (int j = 0; j < test.boxes[i].length; j++) {
+					if (test.boxes[i][j] != 0) {
+						if (test.boxColors[test.boxes[i][j] - 'A'] != currentColor) {
+							test.walls[i][j] = true;
+						}
+					}
+				}
+			}
+
+			LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
+			for (int i = 0; i < test.agentRows.length; i++) {
+				if (currentColor == s.agentColors[i]) {
+					same_color_agents.add(i);
+				} else {
+					if (i != agent) {
+						test.walls[test.agentRows[i]][test.agentCols[i]] = true;
+					}
+				}
+			}
+
+			if (test.walls[subgoal_row][subgoal_col]) {
+				for (int i = 0; i < test.agentRows.length; i++) {
+					if (currentColor != s.agentColors[i]) {
+						if (test.agentRows[i] == subgoal_row) {
+							if (test.agentCols[i] == subgoal_col) {
+								return false;
+							}
+						}
+					}
+				}
+			}
+
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+
+			boolean reachable = false;
+			for (int agent1 : same_color_agents) {
+				if (reachables[test.agentRows[agent1]][test.agentCols[agent1]] > 0) {
+					reachable = true;
+					break;
+				}
+			}
+
+			reachable = false;
+			for (int i = 0; i < test.boxes.length; i++) {
+				for (int j = 0; j < test.boxes[i].length; j++) {
+					if (test.boxes[i][j] == subgoal_char) {
+						if (reachables[i][j] > 0) {
+							reachable = true;
+						}
+					}
+				}
+			}
+
+			return reachable;
+
+		} else {
+
+			int agentNr = Integer.parseInt(String.valueOf(subgoal_char));
+			int[][] reachables = test.getdistance(subgoal_row, subgoal_col);
+
+			boolean reachable = false;
+			if (reachables[test.agentRows[agentNr]][test.agentCols[agentNr]] > 0) {
+				reachable = true;
+			}
+
+			return reachable;
+		}
+
+
+	}
+
+
+	public static int[] newAgentPosition(State s, int agent) {
+
+		State test = copyState(s);
+		for (int otheragent = 0; otheragent < test.agentRows.length; otheragent++) {
+			if (otheragent != agent) {
+				test.walls[test.agentRows[otheragent]][test.agentCols[otheragent]] = true;
+			}
+		}
+
+		int[][] reachables = test.getdistance(test.agentRows[agent], test.agentCols[agent]);
+
+
+		int[] goalcell = new int[]{test.agentRows[agent] + 1, test.agentCols[agent] + 1};
+		LinkedList<int[]> neighboorcells = new LinkedList<int[]>();
+		neighboorcells.add(new int[]{test.agentRows[agent], test.agentCols[agent]});
+		boolean reachable = false;
+
+		int count = 0;
+		while (!reachable) {
+
+			if (count > 200) {
+				break;
+			}
+
+			int[] currentcell = neighboorcells.poll();
+			State test1 = copyState(test);
+			test1.agentRows[agent] = currentcell[0];
+			test1.agentCols[agent] = currentcell[1];
+
+			if (isreachable(test1)) {
+				goalcell = currentcell;
+				reachable = true;
+				break;
+			} else {
+
+				//North neighboor
+				if (reachables[currentcell[0] - 1][currentcell[1]] > 0) {
+					neighboorcells.add(new int[]{currentcell[0] - 1, currentcell[1]});
+				}
+
+				//South neighboor
+				if (reachables[currentcell[0] + 1][currentcell[1]] > 0) {
+					neighboorcells.add(new int[]{currentcell[0] + 1, currentcell[1]});
+				}
+
+				//West neighboor
+				if (reachables[currentcell[0]][currentcell[1] - 1] > 0) {
+					neighboorcells.add(new int[]{currentcell[0], currentcell[1] - 1});
+				}
+
+				//East neighboor
+				if (reachables[currentcell[0]][currentcell[1] + 1] > 0) {
+					neighboorcells.add(new int[]{currentcell[0], currentcell[1] + 1});
+				}
+
+			}
+
+			count += 1;
+
+		}
+
+		return goalcell;
+
+	}
 
 
 	private static long startTime = System.nanoTime();

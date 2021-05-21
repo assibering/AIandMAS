@@ -1,17 +1,11 @@
 package searchclient;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.Random;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 
-public class State
-{
+public class State {
     private static final Random RNG = new Random(1);
 
     /*
@@ -35,9 +29,9 @@ public class State
     */
     public boolean[][] walls;
     public char[][] boxes;
-    
-    
-//    public static char[][] goals;
+
+
+    //    public static char[][] goals;
     public char[][] goals;
 
     /*
@@ -45,7 +39,7 @@ public class State
         this.boxColor[1] is the color of B boxes, etc.
     */
     public Color[] boxColors;
- 
+
     public final State parent;
     public final Action[] jointAction;
     private final int g;
@@ -58,8 +52,7 @@ public class State
     // Arguments are not copied, and therefore should not be modified after being passed in.
     public State(int[] agentRows, int[] agentCols, Color[] agentColors, boolean[][] walls,
                  char[][] boxes, Color[] boxColors, char[][] goals, int[][] distancegrid
-    )
-    {
+    ) {
         this.agentRows = agentRows;
         this.agentCols = agentCols;
         this.agentColors = agentColors;
@@ -97,13 +90,11 @@ public class State
 
         // Apply each action
         int numAgents = this.agentRows.length;
-        for (int agent = 0; agent < numAgents; ++agent)
-        {
+        for (int agent = 0; agent < numAgents; ++agent) {
             Action action = jointAction[agent];
             char box;
 
-            switch (action.type)
-            {
+            switch (action.type) {
                 case NoOp:
                     break;
 
@@ -129,107 +120,106 @@ public class State
         }
     }
 
-    public int g()
-    {
+    public int g() {
         return this.g;
     }
-    
+
     public void setGoalstate(char[][] goal) {
-    	this.goals = goal;
+        this.goals = goal;
     }
-    
+
     public int[] getSingleAgentRow(int agent) {
-    	int[] single = new int[] {this.agentRows[agent]};
-    	return single;
+        int[] single = new int[]{this.agentRows[agent]};
+        return single;
     }
-    
+
     public int[] getSingleAgentCol(int agent) {
-    	int[] single = new int[] {this.agentCols[agent]};
-    	return single;
+        int[] single = new int[]{this.agentCols[agent]};
+        return single;
     }
-    
+
     public char[][] getSingleAgentBoxes(int agent) {
-    	char[][] boxes = new char[this.boxes.length][this.boxes[0].length];
-    	
-    	for (int row=0; row<this.boxes.length; row++) {
-    		for (int col=0; col<this.boxes[row].length; col++) {
-    			
-    			char box = this.boxes[row][col];
-    			if ('A' <= box && box <= 'Z') {
+        char[][] boxes = new char[this.boxes.length][this.boxes[0].length];
+
+        for (int row = 0; row < this.boxes.length; row++) {
+            for (int col = 0; col < this.boxes[row].length; col++) {
+
+                char box = this.boxes[row][col];
+                if ('A' <= box && box <= 'Z') {
                     if (agentColors[agent].equals(boxColors[box - 'A'])) {
                         boxes[row][col] = box;
                     }
                 }
-    			
-    		}
-    	}
-    	return boxes;
+
+            }
+        }
+        return boxes;
     }
-    
+
     //Function to return position of all other agents and their boxes
     //Adds walls to these entities
     public boolean[][] otherEntities(int agent) {
-    	boolean[][] walls = new boolean[this.walls.length][this.walls[0].length];
-    	
-    	for (int row=0; row<this.walls.length; row++) {
-    		for (int col=0; col<this.walls[row].length; col++) {
-    			walls[row][col] = this.walls[row][col];
-    			char box = this.boxes[row][col];
-    			if ('A' <= box && box <= 'Z') {
-    				if (!this.agentColors[agent].equals(boxColors[box - 'A'])) {
-    					walls[row][col] = true;
-    				}
-    			}
-    		}
-    	}
-    	
-    	for (int i=0; i<this.agentRows.length; i++) {
-    		if (i != agent) {
-    			walls[this.agentRows[i]][this.agentCols[i]] = true;
-    		}
-    	}
-    	
-    	return walls;
-    }
-    
-    
-    public LinkedList<char[][]> getAgentSubGoals(int agent) {
-    	
-    	LinkedList<char[][]> subgoalsBox = new LinkedList<char[][]>();
-    	LinkedList<char[][]> subgoalsBoxPrio = new LinkedList<char[][]>();
-    	 
-    	for (int row=1; row<this.goals.length - 1; row ++) {
-        	for (int col=1; col < this.goals[row].length - 1 ; col++) {
-        		
-        		char goal = this.goals[row][col];
-        		
-        		if ('A' <= goal && goal <= 'Z') {
-        			
-        			if (this.agentColors[agent].equals(this.boxColors[goal - 'A'])) {
-        				char[][] subgoal = new char[this.goals.length][this.goals[0].length];
-            			subgoal[row][col] = goal;
-            			
-            			if (prioritizeSubGoal(row, col)) {
-            				subgoalsBoxPrio.addLast(subgoal);
-            			} else {
-            				subgoalsBox.addLast(subgoal);
-            			}
-        			}
-        			
-                } else if ('0' <= goal && goal <= '9') {
-                	if (agent == Integer.parseInt(String.valueOf(goal))) {
-                		char[][] subgoal = new char[this.goals.length][this.goals[0].length];
-            			subgoal[row][col] = goal;
-            			subgoalsBox.addLast(subgoal);
-                	}
+        boolean[][] walls = new boolean[this.walls.length][this.walls[0].length];
+
+        for (int row = 0; row < this.walls.length; row++) {
+            for (int col = 0; col < this.walls[row].length; col++) {
+                walls[row][col] = this.walls[row][col];
+                char box = this.boxes[row][col];
+                if ('A' <= box && box <= 'Z') {
+                    if (!this.agentColors[agent].equals(boxColors[box - 'A'])) {
+                        walls[row][col] = true;
+                    }
                 }
-        	}
+            }
         }
-    	
-    	for (char [][] priosubgoal : subgoalsBoxPrio) {
-    		subgoalsBox.addFirst(priosubgoal);
-    	}
-    	
+
+        for (int i = 0; i < this.agentRows.length; i++) {
+            if (i != agent) {
+                walls[this.agentRows[i]][this.agentCols[i]] = true;
+            }
+        }
+
+        return walls;
+    }
+
+
+    public LinkedList<char[][]> getAgentSubGoals(int agent) {
+
+        LinkedList<char[][]> subgoalsBox = new LinkedList<char[][]>();
+        LinkedList<char[][]> subgoalsBoxPrio = new LinkedList<char[][]>();
+
+        for (int row = 1; row < this.goals.length - 1; row++) {
+            for (int col = 1; col < this.goals[row].length - 1; col++) {
+
+                char goal = this.goals[row][col];
+
+                if ('A' <= goal && goal <= 'Z') {
+
+                    if (this.agentColors[agent].equals(this.boxColors[goal - 'A'])) {
+                        char[][] subgoal = new char[this.goals.length][this.goals[0].length];
+                        subgoal[row][col] = goal;
+
+                        if (prioritizeSubGoal(row, col)) {
+                            subgoalsBoxPrio.addLast(subgoal);
+                        } else {
+                            subgoalsBox.addLast(subgoal);
+                        }
+                    }
+
+                } else if ('0' <= goal && goal <= '9') {
+                    if (agent == Integer.parseInt(String.valueOf(goal))) {
+                        char[][] subgoal = new char[this.goals.length][this.goals[0].length];
+                        subgoal[row][col] = goal;
+                        subgoalsBox.addLast(subgoal);
+                    }
+                }
+            }
+        }
+
+        for (char[][] priosubgoal : subgoalsBoxPrio) {
+            subgoalsBox.addFirst(priosubgoal);
+        }
+
 //    	LinkedList<char[][]> subgoal_split_all = new LinkedList<char[][]>();
 //    	
 //    	for (char[][] subgoal : subgoalsBox) {
@@ -239,40 +229,39 @@ public class State
 //    			subgoal_split_all.addLast(subgoalS);
 //    		}
 //    	}
-    	
-    	return subgoalsBox;
+
+        return subgoalsBox;
     }
-    
-    
+
+
     public LinkedList<char[][]> splitSubgoal(char[][] subgoal, int agent) {
-    	
-    	char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
-    	String agentString = Integer.toString(0);
-    	char agentchar = agentString.charAt(0);
-//    	System.err.println("AGENTCHAR" + agentchar);
-    	LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
-    	char subgoal_char = 0;
-    	
-    	outerloop1:
-    	for (int i=1; i<subgoal.length-1; i++) {
-    		for (int j=1; j<subgoal[i].length; j++) {
-    			if (subgoal[i][j] != 0) {
-    				subgoal_char = subgoal[i][j];
-    				break outerloop1;
-    			}
-    		}
-    	}
-    	
-    	if (subgoal_char >= '0' && subgoal_char <= '9') {
-    		subgoal_split.addFirst(subgoal);
-    		return subgoal_split;
-    	}
-    	
-    	outerloop2:
-    	for (int i=1; i<this.boxes.length-1; i++) {
-    		for (int j=1; j<this.boxes[i].length; j++) {
-    			char boxchar = this.boxes[i][j];
-    			if (boxchar == subgoal_char) {
+
+        char[][] findBoxGoal = new char[subgoal.length][subgoal[0].length];
+        String agentString = Integer.toString(0);
+        char agentchar = agentString.charAt(0);
+        LinkedList<char[][]> subgoal_split = new LinkedList<char[][]>();
+        char subgoal_char = 0;
+
+        outerloop1:
+        for (int i = 1; i < subgoal.length - 1; i++) {
+            for (int j = 1; j < subgoal[i].length; j++) {
+                if (subgoal[i][j] != 0) {
+                    subgoal_char = subgoal[i][j];
+                    break outerloop1;
+                }
+            }
+        }
+
+        if (subgoal_char >= '0' && subgoal_char <= '9') {
+            subgoal_split.addFirst(subgoal);
+            return subgoal_split;
+        }
+
+        outerloop2:
+        for (int i = 1; i < this.boxes.length - 1; i++) {
+            for (int j = 1; j < this.boxes[i].length; j++) {
+                char boxchar = this.boxes[i][j];
+                if (boxchar == subgoal_char) {
                     if (this.cellIsFree(i - 1, j).isApplicable()) {
                         findBoxGoal[i - 1][j] = agentchar;
                         break outerloop2;
@@ -286,132 +275,126 @@ public class State
                         findBoxGoal[i][j + 1] = agentchar;
                         break outerloop2;
                     }
-    				
-    				if (!this.walls[i-1][j]) {
-    					findBoxGoal[i-1][j] = agentchar;
-    					break outerloop2;
-    				} else if (!this.walls[i+1][j]) {
-    					findBoxGoal[i+1][j] = agentchar;
-    					break outerloop2;
-    				} else if (!this.walls[i][j-1]) {
-    					findBoxGoal[i][j-1] = agentchar;
-    					break outerloop2;
-    				} else if (!this.walls[i][j+1]) {
-    					findBoxGoal[i][j+1] = agentchar;
-    					break outerloop2;
-    				}
-    				
-    			}
-    		}
-    	}
-    	
-    	subgoal_split.addFirst(findBoxGoal);
-    	subgoal_split.addLast(subgoal);
-    	
-    	return subgoal_split;
+
+                    if (!this.walls[i - 1][j]) {
+                        findBoxGoal[i - 1][j] = agentchar;
+                        break outerloop2;
+                    } else if (!this.walls[i + 1][j]) {
+                        findBoxGoal[i + 1][j] = agentchar;
+                        break outerloop2;
+                    } else if (!this.walls[i][j - 1]) {
+                        findBoxGoal[i][j - 1] = agentchar;
+                        break outerloop2;
+                    } else if (!this.walls[i][j + 1]) {
+                        findBoxGoal[i][j + 1] = agentchar;
+                        break outerloop2;
+                    }
+
+                }
+            }
+        }
+
+        subgoal_split.addFirst(findBoxGoal);
+        subgoal_split.addLast(subgoal);
+
+        return subgoal_split;
     }
-    
+
     public int[][] getdistance(int row_source, int col_source) {
-    	int[][] init_grid = new int[this.boxes.length][this.boxes[0].length];
-    	init_grid[row_source][col_source] = 1;
-    	LinkedList<int[]> queue = new LinkedList<int[]>();
-    	queue.add(new int[] {row_source, col_source});
-    	
-    	return distance(init_grid, queue);
+        int[][] init_grid = new int[this.boxes.length][this.boxes[0].length];
+        init_grid[row_source][col_source] = 1;
+        LinkedList<int[]> queue = new LinkedList<int[]>();
+        queue.add(new int[]{row_source, col_source});
+
+        return distance(init_grid, queue);
     }
-    
+
     public int[][] distance(int[][] grid, LinkedList<int[]> queue) {
-    	if (queue.isEmpty()) {
-    		return grid;
-    	}
-    	
-    	int[] element = queue.pollFirst();
-    	int i = element[0];
-    	int j = element[1];
-    	int dist = grid[i][j];
-    	
-    	//North
-    	if (i > 0) {
-    		if (!this.walls[i-1][j]) {
-        		if (grid[i-1][j] == 0) {
-        			grid[i-1][j] = dist + 1;
-        			queue.add(new int[]{i-1, j});
-        		}
-        	}
-    	}
-    	
-    	//South
-    	if (i+1 < grid.length) {
-    		if (!this.walls[i+1][j]) {
-        		if (grid[i+1][j] == 0) {
-        			grid[i+1][j] = dist + 1;
-        			queue.add(new int[]{i+1, j});
-        		}
-        	}
-    	}
-    	
-    	//East
-    	if(j+1 < grid[0].length) {
-    		if (!this.walls[i][j+1]) {
-        		if (grid[i][j+1] == 0) {
-        			grid[i][j+1] = dist + 1;
-        			queue.add(new int[]{i, j+1});
-        		}
-        	}
-    	}
-    	
-    	//West
-    	if(j > 0) {
-    		if (!this.walls[i][j-1]) {
-        		if (grid[i][j-1] == 0) {
-        			grid[i][j-1] = dist + 1;
-        			queue.add(new int[]{i, j-1});
-        		}
-        	}
-    	}
-    	
-    	
-    	return distance(grid, queue);
-    	
+        if (queue.isEmpty()) {
+            return grid;
+        }
+
+        int[] element = queue.pollFirst();
+        int i = element[0];
+        int j = element[1];
+        int dist = grid[i][j];
+
+        //North
+        if (i > 0) {
+            if (!this.walls[i - 1][j]) {
+                if (grid[i - 1][j] == 0) {
+                    grid[i - 1][j] = dist + 1;
+                    queue.add(new int[]{i - 1, j});
+                }
+            }
+        }
+
+        //South
+        if (i + 1 < grid.length) {
+            if (!this.walls[i + 1][j]) {
+                if (grid[i + 1][j] == 0) {
+                    grid[i + 1][j] = dist + 1;
+                    queue.add(new int[]{i + 1, j});
+                }
+            }
+        }
+
+        //East
+        if (j + 1 < grid[0].length) {
+            if (!this.walls[i][j + 1]) {
+                if (grid[i][j + 1] == 0) {
+                    grid[i][j + 1] = dist + 1;
+                    queue.add(new int[]{i, j + 1});
+                }
+            }
+        }
+
+        //West
+        if (j > 0) {
+            if (!this.walls[i][j - 1]) {
+                if (grid[i][j - 1] == 0) {
+                    grid[i][j - 1] = dist + 1;
+                    queue.add(new int[]{i, j - 1});
+                }
+            }
+        }
+
+
+        return distance(grid, queue);
+
     }
-    
-    
-    
+
+
     public boolean prioritizeSubGoal(int row, int col) {
-    	
-    	char north = this.goals[row-1][col];
-    	char south = this.goals[row+1][col];
-    	char west = this.goals[row][col-1];
-    	char east = this.goals[row][col+1];
-    	
-    	if (this.walls[row-1][col] || ('A' <= north && north <= 'Z')) {
-    		if (this.walls[row+1][col] || ('A' <= south && south <= 'Z')) {
-    			if (this.walls[row][col-1] || ('A' <= west && west <= 'Z')) {
-    				if (this.walls[row][col+1] || ('A' <= east && east <= 'Z')) {
-    					return true;
-    				}
-    			}
-    		}
-    	}
-    	
-    	return false;
-    	
+
+        char north = this.goals[row - 1][col];
+        char south = this.goals[row + 1][col];
+        char west = this.goals[row][col - 1];
+        char east = this.goals[row][col + 1];
+
+        if (this.walls[row - 1][col] || ('A' <= north && north <= 'Z')) {
+            if (this.walls[row + 1][col] || ('A' <= south && south <= 'Z')) {
+                if (this.walls[row][col - 1] || ('A' <= west && west <= 'Z')) {
+                    if (this.walls[row][col + 1] || ('A' <= east && east <= 'Z')) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+
     }
 
 
-    public boolean isGoalState()
-    {
-        for (int row = 1; row < this.goals.length - 1; row++)
-        {
-            for (int col = 1; col < this.goals[row].length - 1; col++)
-            {
+    public boolean isGoalState() {
+        for (int row = 1; row < this.goals.length - 1; row++) {
+            for (int col = 1; col < this.goals[row].length - 1; col++) {
                 char goal = this.goals[row][col];
 
-                if ('A' <= goal && goal <= 'Z' && this.boxes[row][col] != goal)
-                {
+                if ('A' <= goal && goal <= 'Z' && this.boxes[row][col] != goal) {
                     return false;
-                }
-                else if ('0' <= goal && goal <= '9' &&
+                } else if ('0' <= goal && goal <= '9' &&
                         !(this.agentRows[0] == row && this.agentCols[0] == col)) {
                     return false;
                 }
@@ -462,32 +445,26 @@ public class State
 
             // Advance permutation
             boolean done = false;
-            for (int agent = 0; agent < numAgents; ++agent)
-            {
-                if (actionsPermutation[agent] < applicableActions[agent].length - 1)
-                {
+            for (int agent = 0; agent < numAgents; ++agent) {
+                if (actionsPermutation[agent] < applicableActions[agent].length - 1) {
                     ++actionsPermutation[agent];
                     break;
-                }
-                else
-                {
+                } else {
                     actionsPermutation[agent] = 0;
-                    if (agent == numAgents - 1)
-                    {
+                    if (agent == numAgents - 1) {
                         done = true;
                     }
                 }
             }
 
             // Last permutation?
-            if (done)
-            {
+            if (done) {
                 break;
             }
         }
 
         Collections.shuffle(expandedStates, State.RNG);
-        
+
         return expandedStates;
     }
 
@@ -501,8 +478,7 @@ public class State
         int destinationRow;
         int destinationCol;
         ApplicabilityResult result;
-        switch (action.type)
-        {
+        switch (action.type) {
             case NoOp:
                 return new ApplicabilityResult();
 
@@ -562,16 +538,14 @@ public class State
         int[] boxCols = new int[numAgents]; // current column of box moved by action
 
         // Collect cells to be occupied and boxes to be moved
-        for (int agent = 0; agent < numAgents; ++agent)
-        {
+        for (int agent = 0; agent < numAgents; ++agent) {
             Action action = jointAction[agent];
             int agentRow = this.agentRows[agent];
             int agentCol = this.agentCols[agent];
             int boxRow;
             int boxCol;
 
-            switch (action.type)
-            {
+            switch (action.type) {
                 case NoOp:
                     break;
 
@@ -595,43 +569,35 @@ public class State
                     boxRows[agent] = agentRow;
                     boxCols[agent] = agentCol;
                     break;
-           }
-            
+            }
+
         }
         //DEFINE OCCUPIED POSITIONS
 
-        for (int a1 = 0; a1 < numAgents; ++a1)
-        {
-            if (jointAction[a1] == Action.NoOp)
-            {
+        for (int a1 = 0; a1 < numAgents; ++a1) {
+            if (jointAction[a1] == Action.NoOp) {
                 continue;
             }
 
-            for (int a2 = a1 + 1; a2 < numAgents; ++a2)
-            {
-                if (jointAction[a2] == Action.NoOp)
-                {
+            for (int a2 = a1 + 1; a2 < numAgents; ++a2) {
+                if (jointAction[a2] == Action.NoOp) {
                     continue;
                 }
 
                 // Moving into same cell?
-                if (destinationRows[a1] == destinationRows[a2] && destinationCols[a1] == destinationCols[a2])
-                {
+                if (destinationRows[a1] == destinationRows[a2] && destinationCols[a1] == destinationCols[a2]) {
                     return ConflictResult.thereIsConflict(a1, a2);
                 }
 
-                if (boxRows[a1] == boxRows[a2] && boxCols[a1] == boxCols[a2])
-                {
+                if (boxRows[a1] == boxRows[a2] && boxCols[a1] == boxCols[a2]) {
                     return ConflictResult.thereIsConflict(a1, a2);
                 }
 
-                if (destinationRows[a1] == boxRows[a2]  && destinationCols[a1] == boxCols[a2])
-                {
+                if (destinationRows[a1] == boxRows[a2] && destinationCols[a1] == boxCols[a2]) {
                     return ConflictResult.thereIsConflict(a1, a2);
                 }
-                
-                if (destinationRows[a2] == boxRows[a1]  && destinationCols[a2] == boxCols[a1])
-                {
+
+                if (destinationRows[a2] == boxRows[a1] && destinationCols[a2] == boxCols[a1]) {
                     return ConflictResult.thereIsConflict(a1, a2);
                 }
             }
@@ -660,24 +626,19 @@ public class State
         return result;
     }
 
-    private char agentAt(int row, int col)
-    {
-        for (int i = 0; i < this.agentRows.length; i++)
-        {
-            if (this.agentRows[i] == row && this.agentCols[i] == col)
-            {
+    private char agentAt(int row, int col) {
+        for (int i = 0; i < this.agentRows.length; i++) {
+            if (this.agentRows[i] == row && this.agentCols[i] == col) {
                 return (char) ('0' + i);
             }
         }
         return 0;
     }
 
-    public Action[][] extractPlan()
-    {
+    public Action[][] extractPlan() {
         Action[][] plan = new Action[this.g][];
         State state = this;
-        while (state.jointAction != null)
-        {
+        while (state.jointAction != null) {
             plan[state.g - 1] = state.jointAction;
             state = state.parent;
         }
@@ -685,10 +646,8 @@ public class State
     }
 
     @Override
-    public int hashCode()
-    {
-        if (this.hash == 0)
-        {
+    public int hashCode() {
+        if (this.hash == 0) {
             final int prime = 31;
             int result = 1;
             result = prime * result + Arrays.hashCode(this.agentColors);
@@ -697,13 +656,10 @@ public class State
             result = prime * result + Arrays.deepHashCode(this.goals);
             result = prime * result + Arrays.hashCode(this.agentRows);
             result = prime * result + Arrays.hashCode(this.agentCols);
-            for (int row = 0; row < this.boxes.length; ++row)
-            {
-                for (int col = 0; col < this.boxes[row].length; ++col)
-                {
+            for (int row = 0; row < this.boxes.length; ++row) {
+                for (int col = 0; col < this.boxes[row].length; ++col) {
                     char c = this.boxes[row][col];
-                    if (c != 0)
-                    {
+                    if (c != 0) {
                         result = prime * result + (row * this.boxes[row].length + col) * c;
                     }
                 }
@@ -714,52 +670,38 @@ public class State
     }
 
     @Override
-    public boolean equals(Object obj)
-    {
-        if (this == obj)
-        {
+    public boolean equals(Object obj) {
+        if (this == obj) {
             return true;
         }
-        if (obj == null)
-        {
+        if (obj == null) {
             return false;
         }
-        if (this.getClass() != obj.getClass())
-        {
+        if (this.getClass() != obj.getClass()) {
             return false;
         }
         State other = (State) obj;
         return Arrays.equals(this.agentRows, other.agentRows) &&
-               Arrays.equals(this.agentCols, other.agentCols) &&
-               Arrays.equals(this.agentColors, other.agentColors) &&
-               Arrays.deepEquals(this.walls, other.walls) &&
-               Arrays.deepEquals(this.boxes, other.boxes) &&
-               Arrays.equals(this.boxColors, other.boxColors) &&
-               Arrays.deepEquals(this.goals, other.goals);
+                Arrays.equals(this.agentCols, other.agentCols) &&
+                Arrays.equals(this.agentColors, other.agentColors) &&
+                Arrays.deepEquals(this.walls, other.walls) &&
+                Arrays.deepEquals(this.boxes, other.boxes) &&
+                Arrays.equals(this.boxColors, other.boxColors) &&
+                Arrays.deepEquals(this.goals, other.goals);
     }
 
     @Override
-    public String toString()
-    {
+    public String toString() {
         StringBuilder s = new StringBuilder();
-        for (int row = 0; row < this.walls.length; row++)
-        {
-            for (int col = 0; col < this.walls[row].length; col++)
-            {
-                if (this.boxes[row][col] > 0)
-                {
+        for (int row = 0; row < this.walls.length; row++) {
+            for (int col = 0; col < this.walls[row].length; col++) {
+                if (this.boxes[row][col] > 0) {
                     s.append(this.boxes[row][col]);
-                }
-                else if (this.walls[row][col])
-                {
+                } else if (this.walls[row][col]) {
                     s.append("+");
-                }
-                else if (this.agentAt(row, col) != 0)
-                {
+                } else if (this.agentAt(row, col) != 0) {
                     s.append(this.agentAt(row, col));
-                }
-                else
-                {
+                } else {
                     s.append(" ");
                 }
             }
@@ -767,9 +709,8 @@ public class State
         }
         return s.toString();
     }
-    
-    public Coordinates conflictRecognition(int agent)
-    {
+
+    public Coordinates conflictRecognition(int agent) {
         //get the goal color
         char goal = '0';
         int goalI = -1;
@@ -779,10 +720,8 @@ public class State
 
         LinkedList<Point> tempLinkedList = new LinkedList<Point>();
         Queue<Coordinates> boxCords = new LinkedList<Coordinates>();
-        for(int i = 0; i < goals.length; ++i)
-        {
-            for(int j = 0; j < goals[i].length; ++j)
-            {
+        for (int i = 0; i < goals.length; ++i) {
+            for (int j = 0; j < goals[i].length; ++j) {
                 if (goals[i][j] != 0) {
                     goal = goals[i][j];
                     goalI = i;
@@ -801,47 +740,28 @@ public class State
         Color c = boxColors[goal - 'A'];
 
         //turn everything else to walls
-        for(int i = 0; i < boxes.length; ++i)
-        {
-            for(int j = 0; j < boxes[i].length; ++j)
-            {
-                if(boxes[i][j] != 0)
-                {
-                    if(boxColors[boxes[i][j] - 'A'] != c)
-                    {
+        for (int i = 0; i < boxes.length; ++i) {
+            for (int j = 0; j < boxes[i].length; ++j) {
+                if (boxes[i][j] != 0) {
+                    if (boxColors[boxes[i][j] - 'A'] != c) {
                         tempWalls[i][j] = true;
-                    }
-                    else
-                    {
-                        if(goal == boxes[i][j])
-                        {
-                            boxCords.add(new Coordinates(i,j,'0'));
+                    } else {
+                        if (goal == boxes[i][j]) {
+                            boxCords.add(new Coordinates(i, j, '0'));
                         }
                     }
                 }
-//                if(this.agentAt(i, j) != 0)
-//                {
-//                    if(agentColors[this.agentAt(i, j)-'0'] != c)
-//                    {
-//                        tempWalls[i][j] = true;
-//                    }
-//                    else
-//                    {
-//                        agentI = i;
-//                        agentJ = j;
-//                    }
-//                }
             }
         }
-        
-        for (int i=0; i<this.agentRows.length; i++) {
-        	if (i != agent) {
-        		tempWalls[this.agentRows[i]][this.agentCols[i]] = true;
-        	}
+
+        for (int i = 0; i < this.agentRows.length; i++) {
+            if (i != agent) {
+                tempWalls[this.agentRows[i]][this.agentCols[i]] = true;
+            }
         }
-        
+
         agentI = this.agentRows[agent];
-		agentJ = this.agentCols[agent];
+        agentJ = this.agentCols[agent];
 
 
         int reachedBox = -1;
@@ -849,8 +769,7 @@ public class State
 
         Queue<Coordinates> boxCords2 = new LinkedList<>(boxCords);
 
-        while(!boxCords2.isEmpty())
-        {
+        while (!boxCords2.isEmpty()) {
 
             Queue<Coordinates> q = new LinkedList<Coordinates>();
 
@@ -859,29 +778,25 @@ public class State
             Coordinates boxCord = boxCords2.poll();
 
             boolean[][] tempWallsCopy = new boolean[tempWalls.length][];
-            for (int i = 0; i < tempWalls.length; i++)
-            {
+            for (int i = 0; i < tempWalls.length; i++) {
                 tempWallsCopy[i] = Arrays.copyOf(tempWalls[i], tempWalls[i].length);
             }
 
             tempLinkedList.add(new Point(agentI, agentJ, null));
-            if(recursiveBFS(q, tempWallsCopy, boxCord, tempLinkedList))
-            {
+            if (recursiveBFS(q, tempWallsCopy, boxCord, tempLinkedList)) {
                 reachedBox = count;
 
 
                 Queue<Coordinates> q2 = new LinkedList<Coordinates>();
                 q2.add(boxCord);
 
-                for (int i = 0; i < tempWalls.length; i++)
-                {
+                for (int i = 0; i < tempWalls.length; i++) {
                     tempWallsCopy[i] = Arrays.copyOf(tempWalls[i], tempWalls[i].length);
                 }
 
                 tempLinkedList.add(new Point(boxCord.x, boxCord.y, null));
 
-                if(recursiveBFS(q2,tempWallsCopy,new Coordinates(goalI, goalJ, '0'), tempLinkedList))
-                {
+                if (recursiveBFS(q2, tempWallsCopy, new Coordinates(goalI, goalJ, '0'), tempLinkedList)) {
                     return new Coordinates(-1, -1, '0');
                 }
             }
@@ -890,8 +805,7 @@ public class State
         }
 
         //we can't reach any box, try to see what's th problem at the first one
-        if(reachedBox == -1)
-        {
+        if (reachedBox == -1) {
             Coordinates boxCord = boxCords.poll();
             LinkedList<Point> collection = new LinkedList<Point>();
             LinkedList<Coordinates> path = new LinkedList<Coordinates>();
@@ -900,36 +814,29 @@ public class State
             q.add(new Coordinates(agentI, agentJ, '0'));
             collection.add(new Point(agentI, agentJ, null));
 
-            for (int i = 0; i < walls.length; i++)
-            {
+            for (int i = 0; i < walls.length; i++) {
                 tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
             }
 
-            recursiveBFS(q,tempWalls,new Coordinates(boxCord.x, boxCord.y, '0'), collection);
+            recursiveBFS(q, tempWalls, new Coordinates(boxCord.x, boxCord.y, '0'), collection);
 
             Point p = getPoint(boxCord.x, boxCord.y, collection);
 
-            while(p != null)
-            {
+            while (p != null) {
                 path.addFirst(new Coordinates(p.x, p.y, '0'));
-                p=p.parent;
+                p = p.parent;
             }
 
-            for(int i = 0; i < path.size(); ++i)
-            {
-                if(boxes[path.get(i).x][path.get(i).y] != 0)
-                {
-                    if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
-                    {
+            for (int i = 0; i < path.size(); ++i) {
+                if (boxes[path.get(i).x][path.get(i).y] != 0) {
+                    if (boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c) {
 
-                        return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
                 }
 
-                if(this.agentAt(path.get(i).x, path.get(i).y) != 0)
-                {
-                    if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
-                    {
+                if (this.agentAt(path.get(i).x, path.get(i).y) != 0) {
+                    if (agentColors[this.agentAt(path.get(i).x, path.get(i).y) - '0'] != c) {
 
                         return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
@@ -937,13 +844,11 @@ public class State
             }
         }
         // we can't reach the goal
-        else
-        {
+        else {
 
             Coordinates boxCord = boxCords.poll();
             reachedBox--;
-            while(reachedBox != -1)
-            {
+            while (reachedBox != -1) {
                 boxCord = boxCords.poll();
                 reachedBox--;
             }
@@ -954,36 +859,29 @@ public class State
             q.add(new Coordinates(boxCord.x, boxCord.y, '0'));
             collection.add(new Point(boxCord.x, boxCord.y, null));
 
-            for (int i = 0; i < walls.length; i++)
-            {
+            for (int i = 0; i < walls.length; i++) {
                 tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
             }
 
-            recursiveBFS(q,tempWalls,new Coordinates(goalI, goalJ, '0'), collection);
+            recursiveBFS(q, tempWalls, new Coordinates(goalI, goalJ, '0'), collection);
 
             Point p = getPoint(goalI, goalJ, collection);
 
-            while(p != null)
-            {
+            while (p != null) {
                 path.addFirst(new Coordinates(p.x, p.y, '0'));
-                p=p.parent;
+                p = p.parent;
             }
 
-            for(int i = 0; i < path.size(); ++i)
-            {
-                if(boxes[path.get(i).x][path.get(i).y] != 0)
-                {
-                    if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
-                    {
+            for (int i = 0; i < path.size(); ++i) {
+                if (boxes[path.get(i).x][path.get(i).y] != 0) {
+                    if (boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c) {
 
-                        return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
+                        return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
                 }
 
-                if(this.agentAt(path.get(i).x, path.get(i).y) != 0)
-                {
-                    if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
-                    {
+                if (this.agentAt(path.get(i).x, path.get(i).y) != 0) {
+                    if (agentColors[this.agentAt(path.get(i).x, path.get(i).y) - '0'] != c) {
 
                         return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
@@ -994,12 +892,9 @@ public class State
 
     }
 
-    public Point getPoint(int x, int y, LinkedList<Point> path)
-    {
-        for(int i = 0; i < path.size(); ++i)
-        {
-            if(path.get(i).x == x && path.get(i).y == y)
-            {
+    public Point getPoint(int x, int y, LinkedList<Point> path) {
+        for (int i = 0; i < path.size(); ++i) {
+            if (path.get(i).x == x && path.get(i).y == y) {
                 return path.get(i);
             }
         }
@@ -1007,42 +902,38 @@ public class State
     }
 
     public boolean recursiveBFS(Queue<Coordinates> q,
-                                      boolean[][] visited, Coordinates goal, LinkedList<Point> path) {
+                                boolean[][] visited, Coordinates goal, LinkedList<Point> path) {
         if (q.isEmpty()) {
             return false;
         }
         Coordinates v = q.poll();
 
-        if (v.x == goal.x && v.y == goal.y){
+        if (v.x == goal.x && v.y == goal.y) {
             return true;
         }
 
-        if(!visited[v.x+1][v.y])
-        {
-            visited[v.x+1][v.y] = true;
-            q.add(new Coordinates(v.x+1, v.y, v.character));
-            path.add(new Point(v.x+1, v.y, getPoint(v.x, v.y, path)));
+        if (!visited[v.x + 1][v.y]) {
+            visited[v.x + 1][v.y] = true;
+            q.add(new Coordinates(v.x + 1, v.y, v.character));
+            path.add(new Point(v.x + 1, v.y, getPoint(v.x, v.y, path)));
         }
 
-        if(!visited[v.x-1][v.y])
-        {
-            visited[v.x-1][v.y] = true;
-            q.add(new Coordinates(v.x-1, v.y, v.character));
-            path.add(new Point(v.x-1, v.y, getPoint(v.x, v.y, path)));
+        if (!visited[v.x - 1][v.y]) {
+            visited[v.x - 1][v.y] = true;
+            q.add(new Coordinates(v.x - 1, v.y, v.character));
+            path.add(new Point(v.x - 1, v.y, getPoint(v.x, v.y, path)));
         }
 
-        if(!visited[v.x][v.y+1])
-        {
-            visited[v.x][v.y+1] = true;
-            q.add(new Coordinates(v.x, v.y+1, v.character));
-            path.add(new Point(v.x, v.y+1, getPoint(v.x, v.y, path)));
+        if (!visited[v.x][v.y + 1]) {
+            visited[v.x][v.y + 1] = true;
+            q.add(new Coordinates(v.x, v.y + 1, v.character));
+            path.add(new Point(v.x, v.y + 1, getPoint(v.x, v.y, path)));
         }
 
-        if(!visited[v.x][v.y-1])
-        {
-            visited[v.x][v.y-1] = true;
-            q.add(new Coordinates(v.x, v.y-1, v.character));
-            path.add(new Point(v.x, v.y-1, getPoint(v.x, v.y, path)));
+        if (!visited[v.x][v.y - 1]) {
+            visited[v.x][v.y - 1] = true;
+            q.add(new Coordinates(v.x, v.y - 1, v.character));
+            path.add(new Point(v.x, v.y - 1, getPoint(v.x, v.y, path)));
         }
 
         return recursiveBFS(q, visited, goal, path);

@@ -114,7 +114,6 @@ public class CentralPlanner {
     public PlanningResult test(State initialState, Action[] jointAction, int step) {
         // If there are no actions to be made, we found the full plan
         if (Arrays.stream(jointAction).allMatch(action -> action == Action.NoOp)) {
-//            System.err.printf("Found full solution at step %d\n", step);
             PlanningResult result = new PlanningResult();
             result.step = step;
             return result;
@@ -123,9 +122,6 @@ public class CentralPlanner {
         for (int agent = 0; agent < initialState.agentRows.length; agent++) {
             ApplicabilityResult applicabilityResult = initialState.isApplicable(agent, jointAction[agent]);
             if (!applicabilityResult.isApplicable()) {
-//                System.err.printf("Found applicability issue with action %s by agent %d at step %d due to %s: %c\n",
-//                        jointAction[agent],
-//                        agent, step, applicabilityResult.type, applicabilityResult.getCause());
                 PlanningResult result = new PlanningResult();
                 result.agent = agent;
                 result.step = step;
@@ -137,7 +133,6 @@ public class CentralPlanner {
         // Check if joint action is conflicting at this point
         ConflictResult conflictResult = initialState.isConflicting(jointAction);
         if (conflictResult.isConflict()) {
-//            System.err.printf("Found conflict issue with agent %d at step %d\n", conflictResult.agent1, step);
             PlanningResult result = new PlanningResult();
             result.agent = conflictResult.agent1;
             result.step = step;
@@ -159,7 +154,6 @@ public class CentralPlanner {
     }
 
     public PlanningResult plan(State initialState, int step) {
-//        System.err.printf("Start planning at step %d\n", step);
         //Can we make a step now?
         Action[] jointAction = getJointAction(step);
         PlanningResult result = test(initialState, jointAction, step);
@@ -177,11 +171,9 @@ public class CentralPlanner {
         int agentToBlame;
         // If there is no conflict, we propagate that back
         if (nextAction.type == PlanningResult.PlanningResultType.NO_CONFLICT) {
-//            System.err.printf("Found full solution at step %d\n", step);
             return nextAction;
         }
         // If we're blocked by an agent that is inactive, we try to wiggle it out with remaining space
-        // TODO fix this? Remains to be seen
         else if (nextAction.cause >= '0' && nextAction.cause <= '9'
                 && isInactive(nextAction.step, nextAction.cause - '0')) {
             agentToBlame = nextAction.cause - '0';
@@ -223,7 +215,6 @@ public class CentralPlanner {
                     originalPlan.length);
             ArrayList<Action[]> temporaryList = new ArrayList<>();
             Collections.addAll(temporaryList, temporaryPlan);
-            // TODO: implement multiple plans case here (as size of list may be smaller than step)
             int relativeSteps = getPlanRelativeStep(step, agentToBlame);
             for (int noOps = relativeSteps; noOps < nextAction.step - step + relativeSteps; noOps++) {
                 temporaryList.add(noOps, new Action[]{Action.NoOp});
@@ -636,6 +627,6 @@ public class CentralPlanner {
             default:
                 throw new InvalidParameterException("Unknown Action");
         }
-        return new Action[]{Action.NoOp}; // TODO: this means we can't in any way step back
+        return new Action[]{Action.NoOp};
     }
 }

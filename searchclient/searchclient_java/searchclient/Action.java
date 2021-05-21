@@ -1,15 +1,13 @@
 package searchclient;
 
-enum ActionType
-{
+enum ActionType {
     NoOp,
     Move,
     Push,
     Pull
 }
 
-public enum Action
-{
+public enum Action {
     /*
         List of possible actions. Each action has the following parameters, 
         taken in order from left to right:
@@ -47,21 +45,21 @@ public enum Action
     PushWS("Push(W,S)", ActionType.Push, 0, -1, 1, 0),
     PushWW("Push(W,W)", ActionType.Push, 0, -1, 0, -1),
 
-    PullNN("Pull(N,N)", ActionType.Pull, -1, 0,-1,0),
-    PullNE("Pull(N,E)", ActionType.Pull, -1, 0,0,1),
-    PullNW("Pull(N,W)", ActionType.Pull, -1, 0,0,-1),
+    PullNN("Pull(N,N)", ActionType.Pull, -1, 0, -1, 0),
+    PullNE("Pull(N,E)", ActionType.Pull, -1, 0, 0, 1),
+    PullNW("Pull(N,W)", ActionType.Pull, -1, 0, 0, -1),
 
-    PullSS("Pull(S,S)", ActionType.Pull, 1, 0,1,0),
-    PullSE("Pull(S,E)", ActionType.Pull, 1, 0,0,1),
-    PullSW("Pull(S,W)", ActionType.Pull, 1, 0,0,-1),
+    PullSS("Pull(S,S)", ActionType.Pull, 1, 0, 1, 0),
+    PullSE("Pull(S,E)", ActionType.Pull, 1, 0, 0, 1),
+    PullSW("Pull(S,W)", ActionType.Pull, 1, 0, 0, -1),
 
-    PullEN("Pull(E,N)", ActionType.Pull, 0, 1,-1,0),
-    PullES("Pull(E,S)", ActionType.Pull, 0, 1,1,0),
-    PullEE("Pull(E,E)", ActionType.Pull, 0, 1,0,1),
+    PullEN("Pull(E,N)", ActionType.Pull, 0, 1, -1, 0),
+    PullES("Pull(E,S)", ActionType.Pull, 0, 1, 1, 0),
+    PullEE("Pull(E,E)", ActionType.Pull, 0, 1, 0, 1),
 
-    PullWN("Pull(W,N)", ActionType.Pull, 0, -1,-1,0),
-    PullWS("Pull(W,S)", ActionType.Pull, 0, -1,1,0),
-    PullWW("Pull(W,W)", ActionType.Pull, 0, -1,0,-1);
+    PullWN("Pull(W,N)", ActionType.Pull, 0, -1, -1, 0),
+    PullWS("Pull(W,S)", ActionType.Pull, 0, -1, 1, 0),
+    PullWW("Pull(W,W)", ActionType.Pull, 0, -1, 0, -1);
 
     public final String name;
     public final ActionType type;

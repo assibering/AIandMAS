@@ -1,7 +1,6 @@
 package searchclient;
 
 public class NotImplementedException
-        extends UnsupportedOperationException
-{
+        extends UnsupportedOperationException {
 
 }
