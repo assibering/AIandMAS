@@ -173,38 +173,6 @@ public class CentralPlanner {
         if (nextAction.type == PlanningResult.PlanningResultType.NO_CONFLICT) {
             return nextAction;
         }
-        // If we're blocked by an agent that is inactive, we try to wiggle it out with remaining space
-        else if (nextAction.cause >= '0' && nextAction.cause <= '9'
-                && isInactive(nextAction.step, nextAction.cause - '0')) {
-            agentToBlame = nextAction.cause - '0';
-            // Since the agent is inactive, there is no original plan to maintain
-            originalPlan = new Action[1][1];
-            originalPlan[0][0] = Action.NoOp;
-            // Our temporary plan is first, NoOping until now (so all actions are taken)
-            ArrayList<Action[]> temporaryList = new ArrayList<>();
-            int relativeSteps = getTotalLength(agentToBlame);
-            for (int noOps = 0; noOps < step - relativeSteps; noOps++) {
-                temporaryList.add(noOps, new Action[]{Action.NoOp});
-            }
-            // Second part of temporary plan is small replan to wiggle the agent out
-            // Our special state is same state as now
-            // In WiggleSearch, our main agent doesn't move - it's the rest of agents that move
-            State specialState = copyState(initialState);
-            // Providing culprit ensures we don't break plans of others
-            Action[][] wigglePlan = AgentWiggleSearch.search(specialState, frontier.update(specialState), nextAction.agent, agentToBlame);
-            // We need to remove other agents for compatibility
-            if (wigglePlan != null) {
-                for (int i = 0; i < wigglePlan.length; i++) {
-                    wigglePlan[i] = new Action[]{wigglePlan[i][nextAction.agent]};
-                }
-                Collections.addAll(temporaryList, wigglePlan);
-            }
-            temporaryPlan = temporaryList.toArray(new Action[0][]);
-            this.allplans[agentToBlame].add(temporaryPlan);
-            // Check if this attempt works
-            resolveAttempt = delve(initialState, step);
-        }
-
         // If we found some conflict, we try to check if delay works at this step
         else {
             agentToBlame = nextAction.agent;

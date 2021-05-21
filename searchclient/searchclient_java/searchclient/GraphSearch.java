@@ -96,33 +96,6 @@ public class GraphSearch {
 			int sequence_solution_length = 0;
 			int unreachable_count = 0;
 
-
-			// Mark agents as initially blocked by other agents
-			boolean[] blockedAgents = new boolean[agents];
-			for (int agent = 0; agent < agents; agent++) {
-				List<Character> blocksByAgent = AgentWiggleSearch.checkAgentBlocks(originalState, agent);
-				for (char blockedAgent : blocksByAgent) {
-					blockedAgents[blockedAgent - '0'] = true;
-				}
-			}
-
-			for (int agent = 0; agent < agents; agent++) {
-				if (blockedAgents[agent]) {
-					Action[][] wigglePlan = AgentWiggleSearch.search(copyState(originalState), centralPlannerFrontier, agent);
-					if (wigglePlan != null) {
-						for (int involvedAgents = 0; involvedAgents < wigglePlan[0].length; involvedAgents++) {
-							Action[][] agentWigglePlan = new Action[wigglePlan.length][];
-							for (int i = 0; i < wigglePlan.length; i++) {
-								agentWigglePlan[i] = new Action[]{wigglePlan[i][involvedAgents]};
-								all_plans[involvedAgents].add(agentWigglePlan);
-								sequence_solution_length += wigglePlan.length;
-								subgoal_actions_order.addLast(agent);
-							}
-						}
-					}
-				}
-			}
-
 			while (subgoal_count < subgoal_total) {
 
 				//	while (!NB_and_R_subgoals.isEmpty()) {
