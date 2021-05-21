@@ -447,12 +447,13 @@ public class State
 
         // Iterate over joint actions, check conflict and generate child states.
         Action[] jointAction = new Action[numAgents];
+        Arrays.fill(jointAction, Action.NoOp);
         int[] actionsPermutation = new int[numAgents];
         ArrayList<State> expandedStates = new ArrayList<>();
-        while (true)
-        {
-            for (int agent = 0; agent < numAgents; ++agent)
-            {
+        while (true) {
+            for (int agent = 0; agent < numAgents; ++agent) {
+                if (applicableActions[agent].length == 0)
+                    continue;
                 jointAction[agent] = applicableActions[agent][actionsPermutation[agent]];
             }
 

@@ -58,7 +58,11 @@ public class AgentWiggleSearch {
                 char goalLetter = s.goals[agentRow][agentCol];
                 if (goalLetter == 0)
                     continue;
-                Color goalColor = s.boxColors[goalLetter - 'A'];
+                Color goalColor = null;
+                if (goalLetter >= 'A' && goalLetter <= 'Z')
+                    goalColor = s.boxColors[goalLetter - 'A'];
+                else if (goalLetter >= '0' && goalLetter <= '9')
+                    goalColor = s.agentColors[goalLetter - '0'];
                 Color agentColor = s.agentColors[culprit];
                 if (!agentColor.equals(goalColor)) {
                     isOnGoal = true;
@@ -68,13 +72,17 @@ public class AgentWiggleSearch {
                     if (agent == wiggledAgent)
                         continue;
                     //Agent row, col, goal letter, goal color, agent color
-                    int agentRow = s.agentRows[agent - '0'];
-                    int agentCol = s.agentCols[agent - '0'];
+                    int agentRow = s.agentRows[agent];
+                    int agentCol = s.agentCols[agent];
                     char goalLetter = s.goals[agentRow][agentCol];
                     if (goalLetter == 0)
                         continue;
-                    Color goalColor = s.boxColors[goalLetter - 'A'];
-                    Color agentColor = s.agentColors[agent - '0'];
+                    Color goalColor = null;
+                    if (goalLetter >= 'A' && goalLetter <= 'Z')
+                        goalColor = s.boxColors[goalLetter - 'A'];
+                    else if (goalLetter >= '0' && goalLetter <= '9')
+                        goalColor = s.agentColors[goalLetter - '0'];
+                    Color agentColor = s.agentColors[agent];
                     if (!agentColor.equals(goalColor)) {
                         isOnGoal = true;
                         break;
@@ -152,13 +160,13 @@ public class AgentWiggleSearch {
                 }
             }
         }
-        System.err.println(Arrays.toString(neighbourCoordinate));
+        //System.err.println(Arrays.toString(neighbourCoordinate));
 
         int currRegion = 2;
         for (int[] agentNeighbour : agentNeighbours) {
             neighbourCoordinate = agentNeighbour;
             if (region[neighbourCoordinate[0]][neighbourCoordinate[1]] == 0) {
-                System.err.println(Arrays.toString(neighbourCoordinate));
+//                System.err.println(Arrays.toString(neighbourCoordinate));
                 int[][] region_temp = testState.getdistance(neighbourCoordinate[0], neighbourCoordinate[1]);
                 for (int j = 0; j < region_temp.length; j++) {
                     for (int k = 0; k < region_temp[j].length; k++) {
