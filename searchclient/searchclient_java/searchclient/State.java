@@ -397,8 +397,7 @@ public class State
     	return false;
     	
     }
-    
-    
+
 
     public boolean isGoalState()
     {
@@ -413,7 +412,7 @@ public class State
                     return false;
                 }
                 else if ('0' <= goal && goal <= '9' &&
-                        !(this.agentRows[goal - '0'] == row && this.agentCols[goal - '0'] == col)) {
+                        !(this.agentRows[0] == row && this.agentCols[0] == col)) {
                     return false;
                 }
             }
@@ -784,8 +783,7 @@ public class State
         {
             for(int j = 0; j < goals[i].length; ++j)
             {
-                if(goals[i][j] != 0)
-                {
+                if (goals[i][j] != 0) {
                     goal = goals[i][j];
                     goalI = i;
                     goalJ = j;
@@ -793,15 +791,14 @@ public class State
                 }
             }
         }
-        
-        System.err.println("GOALCOORD: " + goalI + ":" + goalJ);
-        System.err.println("GOALCHAR: " + goal);
-        
+
+//        System.err.println("GOALCOORD: " + goalI + ":" + goalJ);
+//        System.err.println("GOALCHAR: " + goal);
+
 
         boolean[][] tempWalls = new boolean[walls.length][];
-        for (int i = 0; i < walls.length; i++)
-        {
-                tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
+        for (int i = 0; i < walls.length; i++) {
+            tempWalls[i] = Arrays.copyOf(walls[i], walls[i].length);
         }
 
         Color c = boxColors[goal - 'A'];
@@ -821,7 +818,7 @@ public class State
                     {
                         if(goal == boxes[i][j])
                         {
-                        	System.err.println("BOXCOORDINATES: " + i + ":" + j);
+//                        	System.err.println("BOXCOORDINATES: " + i + ":" + j);
                             boxCords.add(new Coordinates(i,j,'0'));
                         }
                     }
@@ -859,7 +856,7 @@ public class State
         while(!boxCords2.isEmpty())
         {
 
-            System.err.println("Searching through boxes");
+//            System.err.println("Searching through boxes");
             Queue<Coordinates> q = new LinkedList<Coordinates>();
 
             q.add(new Coordinates(agentI, agentJ, '0'));
@@ -877,7 +874,7 @@ public class State
             {
                 reachedBox = count;
 
-                System.err.println("Box is reachable");
+//                System.err.println("Box is reachable");
 
                 Queue<Coordinates> q2 = new LinkedList<Coordinates>();
                 q2.add(boxCord);
@@ -891,7 +888,7 @@ public class State
 
                 if(recursiveBFS(q2,tempWallsCopy,new Coordinates(goalI, goalJ, '0'), tempLinkedList))
                 {
-                    System.err.println("Goal is reachable");
+//                    System.err.println("Goal is reachable");
                     return new Coordinates(-1, -1, '0');
                 }
             }
@@ -902,7 +899,7 @@ public class State
         //we can't reach any box, try to see what's th problem at the first one
         if(reachedBox == -1)
         {
-            System.err.println("Didn't reach box");
+//            System.err.println("Didn't reach box");
             Coordinates boxCord = boxCords.poll();
             LinkedList<Point> collection = new LinkedList<Point>();
             LinkedList<Coordinates> path = new LinkedList<Coordinates>();
@@ -932,7 +929,7 @@ public class State
                 {
                     if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
                     {
-                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
+//                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
                         return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
                     }
                 }
@@ -941,7 +938,7 @@ public class State
                 {
                     if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
                     {
-                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
+//                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
                         return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
                 }
@@ -950,7 +947,7 @@ public class State
         // we can't reach the goal
         else
         {
-            System.err.println("Didn't reach the goal");
+//            System.err.println("Didn't reach the goal");
             Coordinates boxCord = boxCords.poll();
             reachedBox--;
             while(reachedBox != -1)
@@ -986,7 +983,7 @@ public class State
                 {
                     if(boxColors[boxes[path.get(i).x][path.get(i).y] - 'A'] != c)
                     {
-                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
+//                        System.err.println("Box in the way: " + path.get(i).x + " " + path.get(i).y);
                         return new Coordinates(path.get(i).x, path.get(i).y, '0'); 
                     }
                 }
@@ -995,7 +992,7 @@ public class State
                 {
                     if(agentColors[this.agentAt(path.get(i).x, path.get(i).y)-'0'] != c)
                     {
-                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
+//                        System.err.println("Agent in the way: " + path.get(i).x + " " + path.get(i).y);
                         return new Coordinates(path.get(i).x, path.get(i).y, '0');
                     }
                 }

@@ -150,7 +150,7 @@ public class AgentWiggleSearch {
 
         int[] neighbourCoordinate = agentNeighbours.poll();
         if (neighbourCoordinate == null) {
-            throw new IndexOutOfBoundsException("Agent has no neighbours.");
+            return result;
         }
         int[][] region = testState.getdistance(neighbourCoordinate[0], neighbourCoordinate[1]);
         for (int i = 0; i < region.length; i++) {
