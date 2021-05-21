@@ -75,7 +75,7 @@ public class State
 
     // Constructs the state resulting from applying jointAction in parent.
     // Precondition: Joint action must be applicable and non-conflicting in parent state.
-    private State(State parent, Action[] jointAction)
+    public State(State parent, Action[] jointAction)
     {
         // Copy parent
         this.agentRows = Arrays.copyOf(parent.agentRows, parent.agentRows.length);
@@ -491,7 +491,7 @@ public class State
         return expandedStates;
     }
 
-    private boolean isApplicable(int agent, Action action)
+    public boolean isApplicable(int agent, Action action)
     {
         int agentRow = this.agentRows[agent];
         int agentCol = this.agentCols[agent];
@@ -548,7 +548,7 @@ public class State
         return false;
     }
 
-    private boolean isConflicting(Action[] jointAction)
+    public boolean isConflicting(Action[] jointAction)
     {
         int numAgents = this.agentRows.length;
 
