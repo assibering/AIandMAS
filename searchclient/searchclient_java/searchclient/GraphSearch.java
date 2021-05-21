@@ -785,7 +785,12 @@ searchclient.Color currentColor = s.agentColors[agentX];
      			char agent_char = (char)(i+'0');
      			agent_chars[agentregion-1].add(agent_char);
      		}
-
+if (agent_row == goal_row && agent_row == goal_row) {
+     			char agent_char = (char)(i+'0');
+     			for (int regions_count = 0; regions_count<agent_chars.length; regions_count++) {
+     				agent_chars[regions_count].add(agent_char);
+     			}
+     		}
      	}
 
 
@@ -930,10 +935,12 @@ public static boolean reachableBy(State s, int agent) {
         			}
         		}
         	}
+System.err.println("boxcolor: " + currentColor);
 
         	LinkedList<Integer> same_color_agents = new LinkedList<Integer>();
         	for (int i=0; i<test.agentRows.length; i++) {
         		if (currentColor == s.agentColors[i]) {
+        			System.err.println("agentcolor: " + s.agentColors[i]);
         			same_color_agents.add(i);
         		} else {
 
@@ -1112,6 +1119,11 @@ public static boolean isreachable_removeAgent(State s, int agent) {
 public static int[] newAgentPosition (State s, int agent) {
 
 	State test = copyState(s);
+for (int otheragent=0; otheragent<test.agentRows.length; otheragent++) {
+		if (otheragent != agent) {
+			test.walls[test.agentRows[otheragent]][test.agentCols[otheragent]] = true;
+		}
+	}
 
 	int[][] reachables = test.getdistance(test.agentRows[agent], test.agentCols[agent]);
 

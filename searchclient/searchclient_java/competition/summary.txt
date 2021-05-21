@@ -1,0 +1,290 @@
+Level name: ThxoXBFQ
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Jumpers
+Level solved: Yes.
+Actions used: 289.
+Last action time: 0,349 seconds.
+
+Level name: MAlicious
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MMTS
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MOLILAK
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: DQaNon
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: HiveMind
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: DumbMAS
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MACovid
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: ProgProj
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MASsacre
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MAWOLOLO
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: NPcompete
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: EmilAEmil
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Group39
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Deadlock
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: ArmyAnts
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MABob
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: SmartAgen
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: huristonk
+Level solved: Yes.
+Actions used: 456.
+Last action time: 0,295 seconds.
+
+Level name: MAOleBent
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Ninjas
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: FGST
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: AgentBond
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Rainbow
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: 46
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: README
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MAunfair
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: HoldUd
+Level solved: Yes.
+Actions used: 1469.
+Last action time: 9,121 seconds.
+
+Level name: MAG18
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Overload
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MARegExAZ
+Level solved: Yes.
+Actions used: 439.
+Last action time: 3,292 seconds.
+
+Level name: YungCode
+Level solved: Yes.
+Actions used: 339.
+Last action time: 0,286 seconds.
+
+Level name: TeamLARM
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: EliasGo
+Level solved: Yes.
+Actions used: 158.
+Last action time: 0,212 seconds.
+
+Level name: Group80
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: GoAgentGo
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: masai
+Level solved: Yes.
+Actions used: 477.
+Last action time: 0,415 seconds.
+
+Level name: BotsInPJs
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MAgTHIRTEEN
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: GoneViral
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Freestyle
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: group84
+Level solved: Yes.
+Actions used: 409.
+Last action time: 0,423 seconds.
+
+Level name: DeePurple
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: AKM
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: cbsDudes
+Level solved: Yes.
+Actions used: 203.
+Last action time: 0,262 seconds.
+
+Level name: EOF
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: BlockBois
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: HighJazz
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: vsmas
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: MAAlleys
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: BFSbffs
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: weTried
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Croissant
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: BogoSolve
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: Vangeli
+Level solved: Yes.
+Actions used: 72.
+Last action time: 0,182 seconds.
+
+Level name: BigPoppa
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
+Level name: WESDONK
+Level solved: No.
+Actions used: 0.
+Last action time: 0,000 seconds.
+
